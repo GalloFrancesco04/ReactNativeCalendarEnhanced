@@ -19,8 +19,7 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Calendar Demo</Text>
-      <View style={styles.calendarContainer}>
+      <View>
         <Calendar 
           onSelectDate={handleDateSelect} 
           primaryColor="#1976D2" 
@@ -52,23 +51,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     padding: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-    marginTop: 40,
-  },
-  calendarContainer: {
-    marginVertical: 20,
-  },
-  infoText: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#666',
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-  },
+
+
 });

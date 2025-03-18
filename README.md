@@ -60,10 +60,10 @@ The `Calendar` component is a customizable React Native calendar component desig
 | `todayButtonText`       | `string`                         | `Today`       | Text for the "Go to Today" button.                                         |
 | `todayButtonTextStyle`  | `TextStyle`                      | `undefined`   | Custom styles for the "Go to Today" button text.                           |
 | `todayButtonStyle`      | `ViewStyle`                      | `undefined`   | Custom styles for the "Go to Today" button.                                |
-| `customIcon`            | `React.ReactNode`                | `null`        | Custom icon to display for specific dates.                                 |
-| `showCustomIcon`        | `boolean | (date: Date) => boolean` | `false`      | Whether to show custom icons for specific dates.                           |
-| `dateIcons`             | `{ [key: string]: React.ReactNode }` | `{}`      | Mapping of dates to custom icons.                                          |
-| `defaultIcon`           | `React.ReactNode`                | `null`        | Default icon for dates without specific icons.                             |
+| `customIcon`            | `React.ReactNode`                | `null`        | Custom icon to display for dates.                                          |
+| `showCustomIcon`        | `boolean \| ((date: Date) => boolean)` | `false`      | Whether to show custom icons for dates.                                    |
+| `dateIcons`             | `{ [key: string]: React.ReactNode \| string \| null }` | `{}` | Mapping of dates to custom icons. Keys are in YYYY-MM-DD format. Use `null` for a date to use the default icon. |
+| `defaultIcon`           | `React.ReactNode`                | `null`        | Default icon for dates with `null` in the dateIcons mapping.               |
 
 ### Example Usage
 
@@ -85,7 +85,8 @@ const App = () => {
 
   const dateIcons = {
     '2025-03-21': <Icon name="star" size={15} color="gold" />,
-    '2025-03-22': null, // Mark the date without specifying an icon
+    '2025-03-22': null, // Will use defaultIcon for this date
+    '2025-03-23': 'calendar', // Can also use string name for FontAwesome icons
   };
 
   return (
@@ -122,14 +123,16 @@ export default App;
 - **Customizable Appearance**: Modify colors, styles, and icons to match your app's theme.
 - **Date Selection**: Easily handle date selection with the `onSelectDate` callback.
 - **Custom Icons**: Display custom icons for specific dates using the `dateIcons` prop.
-- **Default Icon**: Set a default icon for dates without specific icons using the `defaultIcon` prop.
+- **Default Icon**: Set a default icon for dates with `null` values in the `dateIcons` prop.
 - **Today Button**: Quickly navigate to the current date with the "Go to Today" button.
 - **Flexible Week Start**: Choose whether the week starts on Monday or Sunday.
 
 ### Notes
 
 - Ensure you have the `react-native-vector-icons` package installed if you plan to use icons.
-- The `dateIcons` prop allows you to map specific dates to custom icons. Use the `defaultIcon` prop to set a fallback icon for dates without specific icons.
+- For the `dateIcons` prop, keys should be in the format 'YYYY-MM-DD' (e.g., '2023-12-25').
+- You can use string values in the `dateIcons` prop to reference FontAwesome icon names.
+- To use the default icon for a specific date, set its value to `null` in the `dateIcons` object.
 
 ## Learn more
 
