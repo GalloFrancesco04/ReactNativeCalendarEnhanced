@@ -25,16 +25,6 @@ In the output, you'll find options to open the app in a:
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction/).
 
-## Reset the project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
 ## Calendar Component Documentation
 
 The `Calendar` component is a customizable React Native calendar component designed for flexibility and ease of use. Below is a comprehensive guide to its usage.
