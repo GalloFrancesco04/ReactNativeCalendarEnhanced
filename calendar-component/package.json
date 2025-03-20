@@ -1,8 +1,21 @@
 {
   "name": "react-native-calendar-en",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "main": "index.js",
   "license": "MIT",
+  "author": {
+    "name": "Francesco Gallo",
+    "url": "https://github.com/GalloFrancesco04"
+  },
+  "keywords": [
+    "react-native",
+    "calendar",
+    "datepicker",
+    "events",
+    "scheduler",
+    "date",
+    "agenda"
+  ],
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-native": ">=0.60.0"
