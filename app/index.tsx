@@ -23,7 +23,7 @@ export default function Index() {
         <Calendar 
           onSelectDate={handleDateSelect} 
           primaryColor="#1976D2" 
-          iconBorderColor="#1976D2" // Updated prop name to match the Calendar component
+          iconBorderColor="" // Updated prop name to match the Calendar component
           previousIcon={<Icon name="arrow-left" size={16} color="#1976D2" />}
           nextIcon={<Icon name="arrow-right" size={16} color="#1976D2" />}
           startWeekOnMonday={true}
