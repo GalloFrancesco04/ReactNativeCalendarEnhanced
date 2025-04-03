@@ -1,46 +1,84 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TextStyle } from 'react-native';
 import CalendarDay from './CalendarDay';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { formatDateKey } from './utils/dateUtils';
 
 interface CalendarGridProps {
   currentMonth: Date;
   selectedDate: Date | null;
   onSelectDate: (date: Date) => void;
-  primaryColor: string;
-  startWeekOnMonday: boolean;
-  dayNameTextStyle?: TextStyle;
-  dayNumberTextStyle?: TextStyle;
-  dayCellBackgroundColor?: string;
-  dayCellBorderColor?: string;
+  color?: string;                        // Simplified from primaryColor
+  startWeekOnMonday?: boolean;
+  dayNameStyle?: TextStyle;              // Simplified from dayNameTextStyle
+  dayNumberStyle?: TextStyle;            // Simplified from dayNumberTextStyle
+  cellBackgroundColor?: string;          // Simplified from dayCellBackgroundColor
+  cellBorderColor?: string;              // Simplified from dayCellBorderColor
   customIcon?: React.ReactNode;
   showCustomIcon?: boolean | ((date: Date) => boolean);
-  dateIcons?: { [key: string]: React.ReactNode | string | null }; // Allow string, ReactNode or null for icons
-  defaultIcon?: React.ReactNode; // Default icon for dates without specific icons
+  dateIcons?: { [key: string]: React.ReactNode | string | null };
+  defaultIcon?: React.ReactNode;
+  locale?: string;
+  outsideMonthOpacity?: number;          // Simplified from outsideMonthDayOpacity
+  selectedBackgroundColor?: string;      // Simplified from selectedDayBackgroundColor
+  todayColor?: string;                   // Simplified from todayHighlightColor
+  dayNameColor?: string;                 // Color for weekday names
+  dayNumberColor?: string;               // Color for day numbers
+  selectedDayTextColor?: string;         // Color for selected day text
+  formatDateKeyFn?: (date: Date | string) => string;
 }
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({
   currentMonth,
   selectedDate,
   onSelectDate,
-  primaryColor,
+  color,
   startWeekOnMonday,
-  dayNameTextStyle,
-  dayNumberTextStyle,
-  dayCellBackgroundColor = 'white',
-  dayCellBorderColor = '#e0e0e0',
+  dayNameStyle,
+  dayNumberStyle,
+  cellBackgroundColor = 'white',
+  cellBorderColor = '#e0e0e0',
   customIcon,
   showCustomIcon,
   dateIcons = {}, // Default to an empty object
   defaultIcon = null, // Default to no icon if not specified
+  locale = 'en-US', // Default to English
+  outsideMonthOpacity = 0.3,
+  selectedBackgroundColor,
+  todayColor,
+  formatDateKeyFn, // External date formatting function
 }) => {
-  // Array of day names for the header in Italian, starting from Monday if specified
-  const daysOfWeek: string[] = startWeekOnMonday
-    ? ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
-    : ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+  // Get localized day names
+  const getLocalizedDaysOfWeek = (): string[] => {
+    const days: string[] = [];
+    // Create a date for Sunday
+    const date = new Date(2021, 0, 3); // January 3rd 2021 was a Sunday
+    
+    // Create array of days in correct order based on startWeekOnMonday
+    for (let i = 0; i < 7; i++) {
+      const dayIndex = startWeekOnMonday ? 
+        (i + 1) % 7 : // If starting on Monday, the indices are 1, 2, 3, 4, 5, 6, 0
+        i;            // If starting on Sunday, the indices are 0, 1, 2, 3, 4, 5, 6
+      
+      const tempDate = new Date(date);
+      tempDate.setDate(date.getDate() + dayIndex);
+      
+      // Get short day name in the specified locale
+      const dayName = tempDate.toLocaleDateString(locale, { weekday: 'short' });
+      days.push(dayName);
+    }
+    
+    return days;
+  };
   
-  // Get all dates to display in the calendar grid
-  const calendarDays: Date[] = getCalendarDays(currentMonth, startWeekOnMonday);
+  // Array of day names based on locale and week start preference
+  const daysOfWeek: string[] = useMemo(() => getLocalizedDaysOfWeek(), [locale, startWeekOnMonday]);
+  
+  // Get all dates to display in the calendar grid - memoize for performance
+  const calendarDays: Date[] = useMemo(() => 
+    getCalendarDays(currentMonth, startWeekOnMonday), 
+    [currentMonth, startWeekOnMonday]
+  );
 
   // Helper to check if a date is today
   const isToday = (date: Date): boolean => {
@@ -71,11 +109,16 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     } else if (typeof showCustomIcon === 'function') {
       return showCustomIcon(date);
     } else {
-      return showCustomIcon as boolean;
+      return Boolean(showCustomIcon); // Cast to boolean to avoid typescript error
     }
   };
 
   const formatDateKey = (date: Date | string): string => {
+    if (formatDateKeyFn) {
+      return formatDateKeyFn(date);
+    }
+
+    // Fallback to internal implementation if no external function is provided
     if (typeof date === 'string') {
       // Check if the string is in YYYY-MM-DD format
       const yyyyMmDdMatch: RegExpMatchArray | null = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -111,7 +154,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       <View style={styles.weekdayHeader}>
         {daysOfWeek.map((day: string) => (
           <View key={day} style={styles.weekdayItem}>
-            <Text style={[styles.weekdayText, dayNameTextStyle as TextStyle]}>{day}</Text>
+            <Text style={[styles.weekdayText, dayNameStyle as TextStyle]}>{day}</Text>
           </View>
         ))}
       </View>
@@ -129,8 +172,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               style={[
                 styles.dayContainer, 
                 { 
-                  backgroundColor: dayCellBackgroundColor as string, 
-                  borderColor: dayCellBorderColor as string 
+                  backgroundColor: cellBackgroundColor as string, 
+                  borderColor: cellBorderColor as string 
                 }
               ]}
             > 
@@ -140,10 +183,15 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 isSelected={isDateSelected(date)}
                 isToday={isToday(date)}
                 onSelectDate={onSelectDate}
-                primaryColor={primaryColor}
-                dayNumberTextStyle={dayNumberTextStyle}
+                color={color}  // Changed from primaryColor to color
+                textStyle={dayNumberStyle}  // Changed from dayNumberTextStyle to textStyle
                 showCustomIcon={hasIcon}
                 customIcon={iconToShow}
+                locale={locale}
+                outsideMonthOpacity={outsideMonthOpacity}  // Changed from outsideMonthDayOpacity
+                selectedBackgroundColor={selectedBackgroundColor}  // Changed from selectedDayBackgroundColor
+                todayColor={todayColor}  // Changed from todayHighlightColor
+                dayNumberColor={undefined}
               />
             </View>
           );
@@ -154,7 +202,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 };
 
 // Helper function to get all dates that should display in the calendar
-function getCalendarDays(currentMonth: Date, startWeekOnMonday: boolean): Date[] {
+function getCalendarDays(currentMonth: Date, startWeekOnMonday: boolean = false): Date[] {
   const result: Date[] = [];
   
   // Start from the first day of the month
@@ -168,8 +216,8 @@ function getCalendarDays(currentMonth: Date, startWeekOnMonday: boolean): Date[]
     : -dayOfWeek;
   startDate.setDate(startDate.getDate() + diff);
   
-  // Generate 6 weeks of dates (42 days) to ensure we cover the whole month
-  for (let i: number = 0; i < 42; i++) {
+  // Generate 5 weeks of dates (35 days) instead of 6 weeks (42 days)
+  for (let i: number = 0; i < 35; i++) {
     const date: Date = new Date(startDate);
     date.setDate(startDate.getDate() + i);
     result.push(date);
@@ -180,41 +228,37 @@ function getCalendarDays(currentMonth: Date, startWeekOnMonday: boolean): Date[]
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'column',
     paddingBottom: 0,
   },
   weekdayHeader: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-around' as const,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
   weekdayItem: {
-    flex: 1,
-    alignItems: 'center' as const,
+    width: '14.285%',
+    alignItems: 'center',
   },
   weekdayText: {
     fontSize: 14,
-    fontWeight: 'bold' as const,
+    fontWeight: 'bold',
     color: '#666',
   },
   daysGrid: {
-    flexDirection: 'row' as const,
-    flexWrap: 'wrap' as const,
-    justifyContent: 'space-between' as const,
-    paddingHorizontal: 0,
-    paddingTop: 0,
-    paddingBottom: 0,
-    marginBottom: -20,
-    borderLeftWidth: 0.5,
-    borderRightWidth: 0.5,
-    borderColor: '#e0e0e0',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '100%',
   },
   dayContainer: {
     width: '14.285%',
-    aspectRatio: 1,
-    padding: 0,
-    margin: 0,
+    aspectRatio: 0.8, // Changed from 1 to 0.8 to make cells taller than they are wide
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: '#e0e0e0',
   },
 });
 

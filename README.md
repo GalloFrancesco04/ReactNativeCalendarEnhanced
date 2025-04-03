@@ -27,98 +27,196 @@ The `Calendar` component is a customizable React Native calendar component desig
 
 ### Props
 
-| Prop Name               | Type                              | Default       | Description                                                                 |
-|-------------------------|-----------------------------------|---------------|-----------------------------------------------------------------------------|
-| `initialDate`           | `Date`                           | `new Date()`  | The initial date to display in the calendar.                               |
-| `primaryColor`          | `string`                         | `#2196F3`     | The primary color used for highlights and buttons.                         |
-| `onSelectDate`          | `(date: Date) => void`           | `undefined`   | Callback function triggered when a date is selected.                       |
-| `iconBorderColor`       | `string`                         | `#2196F3`     | The border color for navigation icons.                                     |
-| `previousIcon`          | `React.ReactNode`                | `<Text>{'<'}</Text>` | Custom icon for the previous month button.                                 |
-| `nextIcon`              | `React.ReactNode`                | `<Text>{'>'}</Text>` | Custom icon for the next month button.                                     |
-| `startWeekOnMonday`     | `boolean`                        | `true`        | Whether the week starts on Monday.                                         |
-| `headerTextStyle`       | `TextStyle`                      | `undefined`   | Custom styles for the header text.                                         |
-| `dayNameTextStyle`      | `TextStyle`                      | `undefined`   | Custom styles for the day names.                                           |
-| `dayNumberTextStyle`    | `TextStyle`                      | `undefined`   | Custom styles for the day numbers.                                         |
-| `calendarBackgroundColor` | `string`                       | `white`       | Background color of the calendar.                                          |
-| `headerBackgroundColor` | `string`                         | `white`       | Background color of the header.                                            |
-| `dayCellBackgroundColor` | `string`                        | `white`       | Background color of each day cell.                                         |
-| `dayCellBorderColor`    | `string`                         | `#e0e0e0`     | Border color of each day cell.                                             |
-| `todayButtonText`       | `string`                         | `Today`       | Text for the "Go to Today" button.                                         |
-| `todayButtonTextStyle`  | `TextStyle`                      | `undefined`   | Custom styles for the "Go to Today" button text.                           |
-| `todayButtonStyle`      | `ViewStyle`                      | `undefined`   | Custom styles for the "Go to Today" button.                                |
-| `customIcon`            | `React.ReactNode`                | `null`        | Custom icon to display for dates.                                          |
-| `showCustomIcon`        | `boolean \| ((date: Date) => boolean)` | `false`      | Whether to show custom icons for dates.                                    |
-| `dateIcons`             | `{ [key: string]: React.ReactNode \| string \| null }` | `{}` | Mapping of dates to custom icons. Keys are in YYYY-MM-DD format. Use `null` for a date to use the default icon. |
-| `defaultIcon`           | `React.ReactNode`                | `null`        | Default icon for dates with `null` in the dateIcons mapping.               |
+| Prop Name             | Type                              | Default       | Description                                                                 |
+|-----------------------|-----------------------------------|---------------|-----------------------------------------------------------------------------|
+| **Core Functionality**  |                                   |               |                                                                             |
+| `initialDate`         | `Date`                           | `new Date()`  | The initial date to display in the calendar                                |
+| `onSelectDate`        | `(date: Date) => void`           | `undefined`   | Callback function triggered when a date is selected                        |
+| `locale`              | `string`                         | `'en-US'`     | Locale for date formatting and day names                                    |
+| `startWeekOnMonday`   | `boolean`                        | `true`        | Whether the week starts on Monday                                          |
+| **Styling**            |                                   |               |                                                                             |
+| `color`               | `string`                         | `'#2196F3'`   | Primary color used for highlights and buttons                              |
+| `backgroundColor`     | `string`                         | `'white'`     | Background color of the calendar                                           |
+| `headerBackgroundColor` | `string`                       | `'white'`     | Background color for the header section                                    |
+| `cellBackgroundColor` | `string`                         | `'white'`     | Background color of each day cell                                          |
+| `cellBorderColor`     | `string`                         | `'#e0e0e0'`   | Border color of each day cell                                              |
+| `iconColor`           | `string`                         | `'#2196F3'`   | Color for the navigation icons                                             |
+| `selectedBackgroundColor` | `string`                     | `'#2196F3'`   | Background color for the selected day                                      |
+| `todayHighlightColor` | `string`                         | `'#2196F3'`   | Color used to highlight today's date                                      |
+| `outsideMonthOpacity` | `number`                         | `0.3`         | Opacity for days outside the current month                                 |
+| **Text Styling**       |                                   |               |                                                                             |
+| `headerTextColor`     | `string`                         | `'#000'`      | Color for the month/year header text                                       |
+| `headerStyle`         | `TextStyle`                      | `undefined`   | Custom styles for the header text                                          |
+| `dayNameStyle`        | `TextStyle`                      | `undefined`   | Custom styles for the day names                                            |
+| `dayNumberStyle`      | `TextStyle`                      | `undefined`   | Custom styles for the day numbers                                          |
+| `dayNameColor`        | `string`                         | `'#000'`      | Color for weekday names in the header                                      |
+| `dayNumberColor`      | `string`                         | `'#000'`      | Color for day numbers in cells                                             |
+| `selectedDayTextColor`| `string`                         | `'white'`     | Text color for the selected day                                            |
+| **Icons**              |                                   |               |                                                                             |
+| `previousIcon`        | `React.ReactNode`                | Default chevron | Custom icon for the previous month button                                  |
+| `nextIcon`            | `React.ReactNode`                | Default chevron | Custom icon for the next month button                                      |
+| **Date Icons**         |                                   |               |                                                                             |
+| `customIcon`          | `React.ReactNode`                | `null`        | Custom icon to display for dates                                           |
+| `showCustomIcon`      | `boolean \| ((date: Date) => boolean)` | `false`      | Whether to show custom icons for dates                                     |
+| `dateIcons`           | `{ [key: string]: React.ReactNode \| null }` | `{}` | Mapping of dates to custom icons (YYYY-MM-DD format)                       |
+| `defaultIcon`         | `React.ReactNode`                | `null`        | Default icon for dates with `null` in the dateIcons mapping                |
+| **Events**             |                                   |               |                                                                             |
+| `events`              | `CalendarEvent[]`                | `[]`          | Array of events to display on the calendar                                 |
+| `onAddEvent`          | `(event: CalendarEvent) => void` | `undefined`   | Callback function triggered when an event is added                         |
+| `onUpdateEvent`       | `(event: CalendarEvent) => void` | `undefined`   | Callback function triggered when an event is updated                       |
+| `onDeleteEvent`       | `(eventId: string) => void`      | `undefined`   | Callback function triggered when an event is deleted                       |
+| **UI Options**         |                                   |               |                                                                             |
+| `readOnly`            | `boolean`                        | `false`       | Whether the calendar is in read-only mode                                  |
+| `showAddEventButton`  | `boolean`                        | `true`        | Whether to show the "Add Event" button                                     |
+| `buttonsContainerStyle` | `ViewStyle`                      | `undefined`   | Custom styles for the buttons container                                    |
+| `buttonSize`          | `'small' \| 'medium' \| 'large'` | `'medium'`    | Size of the buttons                                                        |
+| **Today Button**       |                                   |               |                                                                             |
+| `todayButtonText`     | `string`                         | `'Today'`     | Text for the "Go to Today" button                                          |
+| `todayButtonStyle`    | `ViewStyle`                      | `undefined`   | Custom styles for the "Go to Today" button                                 |
+| `todayButtonTextStyle` | `TextStyle`                      | `undefined`   | Custom styles for the "Go to Today" button text                            |
+| `todayColor`          | `string`                         | `color value` | Color used to highlight today's date                                       |
 
 ### Example Usage
 
 Below is an example of how to use the `Calendar` component in your app:
 
 ```tsx
-import React, { useState } from 'react';
-import { View } from 'react-native';
-import Calendar from './components/Calendar';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, SafeAreaView } from 'react-native';
+import Calendar, { CalendarEvent } from './components/Calendar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-const App = () => {
+export default function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-  const handleDateSelect = (date: Date) => {
+  const handleDateSelect = useCallback((date: Date) => {
     setSelectedDate(date);
     console.log('Selected date:', date.toDateString());
-  };
+  }, []);
+
+  const handleAddEvent = useCallback((event: CalendarEvent) => {
+    setEvents(prev => [...prev, event]);
+  }, []);
+
+  const handleUpdateEvent = useCallback((updatedEvent: CalendarEvent) => {
+    setEvents(prev => 
+      prev.map(event => 
+        event.id === updatedEvent.id ? updatedEvent : event
+      )
+    );
+  }, []);
+
+  const handleDeleteEvent = useCallback((eventId: string) => {
+    setEvents(prev => prev.filter(event => event.id !== eventId));
+  }, []);
 
   const dateIcons = {
-    '2025-03-21': <Icon name="star" size={15} color="gold" />,
-    '2025-03-22': null, // Will use defaultIcon for this date
-    '2025-03-23': 'calendar', // Can also use string name for FontAwesome icons
+    '2025-04-20': null, // Mark the date without specifying an icon
+    '2025-04-21': <Icon name="star" size={15} color="gold" />,
   };
 
   return (
-    <View>
+    <SafeAreaView style={styles.container}>
       <Calendar 
-        onSelectDate={handleDateSelect} 
-        primaryColor="#1976D2" 
-        iconBorderColor="#1976D2"
-        previousIcon={<Icon name="arrow-left" size={16} color="#1976D2" />}
-        nextIcon={<Icon name="arrow-right" size={16} color="#1976D2" />}
+        // Core functionality props
+        initialDate={selectedDate || new Date()} 
+        onSelectDate={handleDateSelect}
+        locale="en-US"
         startWeekOnMonday={true}
-        headerTextStyle={{ fontSize: 20, fontWeight: 'bold', color: 'black' }}
-        dayNameTextStyle={{ fontSize: 14, fontWeight: 'bold', color: 'black' }}
-        dayNumberTextStyle={{ fontSize: 16, color: 'black' }}
-        calendarBackgroundColor="#FFFFFF"
-        headerBackgroundColor="#F5F5F5"
-        dayCellBackgroundColor="#FFFFFF"
-        dayCellBorderColor="black"
-        todayButtonText="Go to Today"
-        todayButtonTextStyle={{ color: '#FFFFFF', fontWeight: 'bold' }}
-        todayButtonStyle={{ backgroundColor: '#1976D2', borderRadius: 20 }}
-        dateIcons={dateIcons}
-        defaultIcon={<Icon name="square" size={10} color="gray" />} // Set a default icon
+        
+        // Styling props
+        color="#4285F4"
+        backgroundColor="#FFFFFF"
+        cellBackgroundColor="#FFFFFF"
+        cellBorderColor="#E0E0E0"
+        
+        // Text styling props
+        headerStyle={{ fontSize: 20, fontWeight: 'bold' }}
+        dayNameStyle={{ fontSize: 14, fontWeight: 'bold' }}
+        dayNumberStyle={{ fontSize: 16 }}
+        dayNameColor="#666666"
+        dayNumberColor="#333333"
+        selectedDayTextColor="#FFFFFF"
+        
+        // Icons
+        previousIcon={<Icon name="arrow-left" size={16} color="#4285F4" />}
+        nextIcon={<Icon name="arrow-right" size={16} color="#4285F4" />}
+        
+        // Date icons
+        dateIcons={dateIcons} 
+        defaultIcon={<Icon name="circle" size={6} color="gray" />}
+        
+        // Events
+        events={events}
+        onAddEvent={handleAddEvent}
+        onUpdateEvent={handleUpdateEvent}
+        onDeleteEvent={handleDeleteEvent}
+        
+        // UI Options
+        readOnly={false}
+        showAddEventButton={true}
+        buttonSize="medium" // Options: 'small', 'medium', 'large'
+        buttonsContainerStyle={{ 
+          backgroundColor: '#F0F8FF',
+          borderTopWidth: 1,
+          borderTopColor: '#E0E0E0',
+          paddingVertical: 12
+        }}
+        
+        // Today button and highlighting
+        todayButtonText="Today"
+        todayButtonStyle={{
+          backgroundColor: '#4285F4',
+          borderRadius: 20
+        }}
+        todayColor="#FF5722" // Color for highlighting today's date
       />
-    </View>
+    </SafeAreaView>
   );
-};
+}
 
-export default App;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+  }
+});
 ```
 
 ### Features
 
-- **Customizable Appearance**: Modify colors, styles, and icons to match your app's theme.
-- **Date Selection**: Easily handle date selection with the `onSelectDate` callback.
-- **Custom Icons**: Display custom icons for specific dates using the `dateIcons` prop.
-- **Default Icon**: Set a default icon for dates with `null` values in the `dateIcons` prop.
-- **Today Button**: Quickly navigate to the current date with the "Go to Today" button.
-- **Flexible Week Start**: Choose whether the week starts on Monday or Sunday.
+- **Customizable Appearance**: Modify colors, styles, and icons to match your app's theme
+- **Date Selection**: Easily handle date selection with the `onSelectDate` callback
+- **Custom Icons**: Display custom icons for specific dates using the `dateIcons` prop
+- **Event Management**: Add, update, and delete events with built-in modals and callbacks
+- **Today Navigation**: Quickly navigate to the current date with the "Today" button
+- **Flexible Button Styling**: Customize button appearance with `buttonSize` and `buttonsContainerStyle`
+- **Accessibility Support**: Built-in accessibility features for screen readers
+- **Localization**: Support for different languages and date formats through the `locale` prop
+- **Toggle Features**: Hide the "Add Event" button when not needed with `showAddEventButton`
+
+### CalendarEvent Interface
+
+```tsx
+interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  date: Date;
+  color?: string;
+}
+```
 
 ### Notes
 
-- Ensure you have the `react-native-vector-icons` package installed if you plan to use icons.
-- For the `dateIcons` prop, keys should be in the format 'YYYY-MM-DD' (e.g., '2023-12-25').
-- You can use string values in the `dateIcons` prop to reference FontAwesome icon names.
-- To use the default icon for a specific date, set its value to `null` in the `dateIcons` object.
+- The current date is automatically selected when the calendar first loads
+- Events are displayed with a small dot indicator under the day
+- The calendar supports taller day cells for better readability and spacing
+- Clicking on a day with events will show a modal with event details
+- The "Add Event" button can be toggled on/off based on your application needs
+- Button sizes can be adjusted with the `buttonSize` prop ("small", "medium", "large")
 
 ## Learn more
 

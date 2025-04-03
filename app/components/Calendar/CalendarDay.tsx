@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { TouchableOpacity, Text, StyleSheet, TextStyle, View } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
 
 interface CalendarDayProps {
   date: Date;
@@ -8,10 +7,16 @@ interface CalendarDayProps {
   isSelected: boolean;
   isToday: boolean;
   onSelectDate: (date: Date) => void;
-  primaryColor: string;
-  dayNumberTextStyle?: TextStyle;
-  customIcon?: React.ReactNode; // Icon to display for the day
-  showCustomIcon?: boolean | ((date: Date) => boolean); // Updated to match CalendarGrid's interface
+  color?: string;                    // Simplified from primaryColor
+  textStyle?: TextStyle;             // Simplified from dayNumberTextStyle
+  customIcon?: React.ReactNode;      // Icon to display for the day
+  showCustomIcon?: boolean | ((date: Date) => boolean); // Whether to show icon
+  locale?: string;                   // For accessibility formatting
+  outsideMonthOpacity?: number;      // Simplified from outsideMonthDayOpacity
+  selectedBackgroundColor?: string;  // Simplified from selectedDayBackgroundColor
+  todayColor?: string;               // Simplified from todayHighlightColor
+  dayNumberColor?: string;           // Color for the day number text
+  selectedDayTextColor?: string;     // Color for text when day is selected
 }
 
 const CalendarDay: React.FC<CalendarDayProps> = ({
@@ -20,52 +25,118 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   isSelected,
   isToday,
   onSelectDate,
-  primaryColor,
-  dayNumberTextStyle,
-  customIcon = null, // Default to no icon
-  showCustomIcon = false, // Default to not showing the icon
+  color = '#2196F3',
+  textStyle,
+  customIcon = null,
+  showCustomIcon = false,
+  locale = 'en-US',
+  outsideMonthOpacity = 0.3,
+  selectedBackgroundColor,
+  todayColor,
+  dayNumberColor = '#000000',        // Default day number color
+  selectedDayTextColor = '#FFFFFF',  // Default selected day text color
 }) => {
-  // Handle day press
-  const handlePress = (): void => {
+  // Handle day press - now uses useCallback
+  const handlePress = useCallback((): void => {
     onSelectDate(date);
-  };
+  }, [onSelectDate, date]);
 
-  // Build up style objects based on the state of the day
-  const dayContainerStyle: Array<any> = [
-    styles.dayContainer,
-    isSelected && { backgroundColor: primaryColor as string },
-    isToday && !isSelected && { borderColor: primaryColor as string, borderWidth: 1 },
-  ];
+  // Build up style objects based on the state of the day - now memoized
+  const dayContainerStyle = useMemo(() => {
+    const containerStyles = [
+      styles.dayContainer,
+    ];
+    
+    // Add conditional styles
+    if (isSelected) {
+      containerStyles.push({ 
+        backgroundColor: selectedBackgroundColor || color 
+      } as any);
+    }
+    
+    // Add highlight for today
+    if (isToday && !isSelected) {
+      containerStyles.push({ 
+        borderColor: todayColor || color, 
+        borderWidth: 1 
+      } as any);
+    }
+    
+    return containerStyles;
+  }, [isSelected, isToday, selectedBackgroundColor, color, todayColor]);
 
-  // Fix the type errors by properly handling conditional styles
-  const dayTextStyle: Array<TextStyle> = [
-    styles.dayText,
-  ];
-  
-  // Add conditional styles only if they're truthy
-  if (!isCurrentMonth) {
-    dayTextStyle.push(styles.outsideMonthText);
-  }
-  
-  if (isSelected) {
-    dayTextStyle.push(styles.selectedDayText);
-  }
-  
-  // Add the optional style if provided
-  if (dayNumberTextStyle) {
-    dayTextStyle.push(dayNumberTextStyle);
-  }
+  // Fix the type errors by properly handling conditional styles - now memoized
+  const dayTextStyle = useMemo(() => {
+    const textStyles: Array<TextStyle> = [
+      styles.dayText,
+      { color: dayNumberColor },
+    ];
+    
+    if (!isCurrentMonth) {
+      textStyles.push({ opacity: outsideMonthOpacity });
+    }
+    
+    if (isSelected) {
+      textStyles.push({ color: selectedDayTextColor });
+    }
+    
+    // Add the optional style if provided
+    if (textStyle) {
+      textStyles.push(textStyle);
+    }
+    
+    return textStyles;
+  }, [isCurrentMonth, isSelected, dayNumberColor, outsideMonthOpacity, selectedDayTextColor, textStyle]);
 
-  // Determine if we should show the icon based on the type of showCustomIcon
-  const shouldShowIcon: boolean = typeof showCustomIcon === 'function' 
-    ? showCustomIcon(date)
-    : showCustomIcon as boolean;
+  // Determine if we should show the icon - now memoized
+  const shouldShowIcon = useMemo(() => {
+    return typeof showCustomIcon === 'function' 
+      ? showCustomIcon(date)
+      : showCustomIcon as boolean;
+  }, [showCustomIcon, date]);
+
+  // Format the date for accessibility labeling - memoized
+  const accessibilityProps = useMemo(() => {
+    const formattedDate = date.toLocaleDateString(locale, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    // Generate appropriate accessibility state
+    const accessibilityState = {
+      selected: isSelected,
+    };
+    
+    // Build accessibility hint
+    let accessibilityHint = '';
+    
+    if (isToday) {
+      accessibilityHint = "Today. Tap to select this date.";
+    } else {
+      accessibilityHint = "Tap to select this date.";
+    }
+    
+    if (!isCurrentMonth) {
+      accessibilityHint = "This date is outside the current month. " + accessibilityHint;
+    }
+
+    return {
+      accessibilityRole: "button" as const,
+      accessibilityLabel: formattedDate,
+      accessibilityHint,
+      accessibilityState
+    };
+  }, [date, locale, isSelected, isToday, isCurrentMonth]);
 
   return (
     <TouchableOpacity 
       style={dayContainerStyle} 
       onPress={handlePress}
       activeOpacity={0.6}
+      accessible={true}
+      {...accessibilityProps}
     >
       <Text style={dayTextStyle}>{date.getDate()}</Text>
       {shouldShowIcon && customIcon && <View style={styles.iconContainer}>{customIcon}</View>} 
@@ -75,31 +146,26 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
 
 const styles = StyleSheet.create({
   dayContainer: {
-    width: 60, // Increased width
-    height: 80, // Increased height
-    justifyContent: 'flex-start' as const,
-    alignItems: 'flex-start' as const,
-    padding: 4,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 2,
     borderRadius: 0,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    position: 'relative' as const, // For positioning the icon
+    position: 'relative',
   },
   dayText: {
-    fontSize: 16, // Increased font size
-    fontWeight: '500' as const,
-  },
-  outsideMonthText: {
-    opacity: 0.3,
+    fontSize: 14,
+    fontWeight: '500',
   },
   selectedDayText: {
     color: 'white',
   },
   iconContainer: {
-    position: 'absolute' as const,
+    position: 'absolute',
     bottom: 4,
     right: 4,
   },
 });
 
-export default CalendarDay;
+export default React.memo(CalendarDay);
