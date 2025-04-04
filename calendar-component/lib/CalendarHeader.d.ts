@@ -1,15 +1,17 @@
 import React from 'react';
-import { TextStyle } from 'react-native';
+import { TextStyle, ViewStyle } from 'react-native';
 interface CalendarHeaderProps {
     currentMonth: Date;
     onPreviousMonth: () => void;
     onNextMonth: () => void;
-    primaryColor: string;
-    iconBorder: string;
-    previousIcon: React.ReactNode;
-    nextIcon: React.ReactNode;
-    headerTextStyle?: TextStyle;
-    headerBackgroundColor?: string;
+    color?: string;
+    iconColor?: string;
+    previousIcon?: React.ReactNode;
+    nextIcon?: React.ReactNode;
+    textStyle?: TextStyle;
+    backgroundColor?: string;
+    locale?: string;
+    style?: ViewStyle;
 }
 declare const CalendarHeader: React.FC<CalendarHeaderProps>;
 export default CalendarHeader;

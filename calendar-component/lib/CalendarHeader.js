@@ -7,18 +7,31 @@ var react_1 = __importDefault(require("react"));
 var react_native_1 = require("react-native");
 var FontAwesome_1 = __importDefault(require("react-native-vector-icons/FontAwesome"));
 var CalendarHeader = function (_a) {
-    var currentMonth = _a.currentMonth, onPreviousMonth = _a.onPreviousMonth, onNextMonth = _a.onNextMonth, primaryColor = _a.primaryColor, iconBorder = _a.iconBorder, _b = _a.previousIcon, previousIcon = _b === void 0 ? react_1.default.createElement(FontAwesome_1.default, { name: "chevron-left", size: 16, color: iconBorder }) : _b, _c = _a.nextIcon, nextIcon = _c === void 0 ? react_1.default.createElement(FontAwesome_1.default, { name: "chevron-right", size: 16, color: iconBorder }) : _c, headerTextStyle = _a.headerTextStyle, _d = _a.headerBackgroundColor, headerBackgroundColor = _d === void 0 ? 'white' : _d;
-    // Format month and year
-    var formattedMonth = currentMonth.toLocaleString('default', { month: 'long' });
-    var year = currentMonth.getFullYear();
-    return (react_1.default.createElement(react_native_1.View, { style: [styles.header, { backgroundColor: headerBackgroundColor }] },
-        react_1.default.createElement(react_native_1.TouchableOpacity, { onPress: onPreviousMonth, style: [styles.button, { borderColor: iconBorder }] }, previousIcon),
-        react_1.default.createElement(react_native_1.View, { style: styles.titleContainer },
-            react_1.default.createElement(react_native_1.Text, { style: [styles.title, headerTextStyle] },
-                formattedMonth,
-                " ",
-                year)),
-        react_1.default.createElement(react_native_1.TouchableOpacity, { onPress: onNextMonth, style: [styles.button, { borderColor: iconBorder }] }, nextIcon)));
+    var currentMonth = _a.currentMonth, onPreviousMonth = _a.onPreviousMonth, onNextMonth = _a.onNextMonth, _b = _a.color, color = _b === void 0 ? '#2196F3' : _b, // Default primary color
+    iconColor = _a.iconColor, // Will use color if not provided
+    previousIcon = _a.previousIcon, nextIcon = _a.nextIcon, textStyle = _a.textStyle, _c = _a.backgroundColor, backgroundColor = _c === void 0 ? 'white' : _c, _d = _a.locale, locale = _d === void 0 ? 'en-US' : _d, style = _a.style;
+    // Use iconColor if provided, otherwise fall back to color
+    var finalIconColor = iconColor || color;
+    // Generate default icons if not provided
+    var defaultPreviousIcon = react_1.default.createElement(FontAwesome_1.default, { name: "chevron-left", size: 16, color: finalIconColor });
+    var defaultNextIcon = react_1.default.createElement(FontAwesome_1.default, { name: "chevron-right", size: 16, color: finalIconColor });
+    // Format month and year using locale
+    var formattedMonthYear = currentMonth.toLocaleDateString(locale, {
+        month: 'long',
+        year: 'numeric'
+    });
+    // Get next and previous month names for accessibility
+    var nextMonth = new Date(currentMonth);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    var nextMonthName = nextMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    var prevMonth = new Date(currentMonth);
+    prevMonth.setMonth(prevMonth.getMonth() - 1);
+    var prevMonthName = prevMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    return (react_1.default.createElement(react_native_1.View, { style: [styles.header, { backgroundColor: backgroundColor }, style], accessible: true, accessibilityRole: "header" },
+        react_1.default.createElement(react_native_1.TouchableOpacity, { onPress: onPreviousMonth, style: [styles.button, { borderColor: finalIconColor }], accessible: true, accessibilityRole: "button", accessibilityLabel: "Go to previous month, ".concat(prevMonthName), accessibilityHint: "Double tap to navigate to the previous month" }, previousIcon || defaultPreviousIcon),
+        react_1.default.createElement(react_native_1.View, { style: styles.titleContainer, accessible: true, accessibilityRole: "header", accessibilityLabel: "Current month is ".concat(formattedMonthYear) },
+            react_1.default.createElement(react_native_1.Text, { style: [styles.title, textStyle] }, formattedMonthYear)),
+        react_1.default.createElement(react_native_1.TouchableOpacity, { onPress: onNextMonth, style: [styles.button, { borderColor: finalIconColor }], accessible: true, accessibilityRole: "button", accessibilityLabel: "Go to next month, ".concat(nextMonthName), accessibilityHint: "Double tap to navigate to the next month" }, nextIcon || defaultNextIcon)));
 };
 var styles = react_native_1.StyleSheet.create({
     header: {

@@ -1,22 +1,77 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var react_1 = __importDefault(require("react"));
+var react_1 = __importStar(require("react"));
 var react_native_1 = require("react-native");
 var CalendarDay_1 = __importDefault(require("./CalendarDay"));
 var FontAwesome_1 = __importDefault(require("react-native-vector-icons/FontAwesome"));
 var CalendarGrid = function (_a) {
-    var currentMonth = _a.currentMonth, selectedDate = _a.selectedDate, onSelectDate = _a.onSelectDate, primaryColor = _a.primaryColor, startWeekOnMonday = _a.startWeekOnMonday, dayNameTextStyle = _a.dayNameTextStyle, dayNumberTextStyle = _a.dayNumberTextStyle, _b = _a.dayCellBackgroundColor, dayCellBackgroundColor = _b === void 0 ? 'white' : _b, _c = _a.dayCellBorderColor, dayCellBorderColor = _c === void 0 ? '#e0e0e0' : _c, customIcon = _a.customIcon, showCustomIcon = _a.showCustomIcon, _d = _a.dateIcons, dateIcons = _d === void 0 ? {} : _d, // Default to an empty object
+    var currentMonth = _a.currentMonth, selectedDate = _a.selectedDate, onSelectDate = _a.onSelectDate, color = _a.color, startWeekOnMonday = _a.startWeekOnMonday, dayNameStyle = _a.dayNameStyle, dayNumberStyle = _a.dayNumberStyle, _b = _a.cellBackgroundColor, cellBackgroundColor = _b === void 0 ? 'white' : _b, _c = _a.cellBorderColor, cellBorderColor = _c === void 0 ? '#e0e0e0' : _c, customIcon = _a.customIcon, showCustomIcon = _a.showCustomIcon, _d = _a.dateIcons, dateIcons = _d === void 0 ? {} : _d, // Default to an empty object
     _e = _a.defaultIcon, // Default to an empty object
-    defaultIcon = _e === void 0 ? null : _e;
-    // Array of day names for the header in Italian, starting from Monday if specified
-    var daysOfWeek = startWeekOnMonday
-        ? ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
-        : ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
-    // Get all dates to display in the calendar grid
-    var calendarDays = getCalendarDays(currentMonth, startWeekOnMonday);
+    defaultIcon = _e === void 0 ? null : _e, // Default to no icon if not specified
+    _f = _a.locale, // Default to no icon if not specified
+    locale = _f === void 0 ? 'en-US' : _f, // Default to English
+    _g = _a.outsideMonthOpacity, // Default to English
+    outsideMonthOpacity = _g === void 0 ? 0.3 : _g, selectedBackgroundColor = _a.selectedBackgroundColor, todayColor = _a.todayColor, formatDateKeyFn = _a.formatDateKeyFn;
+    // Get localized day names
+    var getLocalizedDaysOfWeek = function () {
+        var days = [];
+        // Create a date for Sunday
+        var date = new Date(2021, 0, 3); // January 3rd 2021 was a Sunday
+        // Create array of days in correct order based on startWeekOnMonday
+        for (var i = 0; i < 7; i++) {
+            var dayIndex = startWeekOnMonday ?
+                (i + 1) % 7 : // If starting on Monday, the indices are 1, 2, 3, 4, 5, 6, 0
+                i; // If starting on Sunday, the indices are 0, 1, 2, 3, 4, 5, 6
+            var tempDate = new Date(date);
+            tempDate.setDate(date.getDate() + dayIndex);
+            // Get short day name in the specified locale
+            var dayName = tempDate.toLocaleDateString(locale, { weekday: 'short' });
+            days.push(dayName);
+        }
+        return days;
+    };
+    // Array of day names based on locale and week start preference
+    var daysOfWeek = (0, react_1.useMemo)(function () { return getLocalizedDaysOfWeek(); }, [locale, startWeekOnMonday]);
+    // Get all dates to display in the calendar grid - memoize for performance
+    var calendarDays = (0, react_1.useMemo)(function () {
+        return getCalendarDays(currentMonth, startWeekOnMonday);
+    }, [currentMonth, startWeekOnMonday]);
     // Helper to check if a date is today
     var isToday = function (date) {
         var today = new Date();
@@ -45,10 +100,14 @@ var CalendarGrid = function (_a) {
             return showCustomIcon(date);
         }
         else {
-            return showCustomIcon;
+            return Boolean(showCustomIcon); // Cast to boolean to avoid typescript error
         }
     };
     var formatDateKey = function (date) {
+        if (formatDateKeyFn) {
+            return formatDateKeyFn(date);
+        }
+        // Fallback to internal implementation if no external function is provided
         if (typeof date === 'string') {
             // Check if the string is in YYYY-MM-DD format
             var yyyyMmDdMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -78,7 +137,7 @@ var CalendarGrid = function (_a) {
     };
     return (react_1.default.createElement(react_native_1.View, { style: styles.container },
         react_1.default.createElement(react_native_1.View, { style: styles.weekdayHeader }, daysOfWeek.map(function (day) { return (react_1.default.createElement(react_native_1.View, { key: day, style: styles.weekdayItem },
-            react_1.default.createElement(react_native_1.Text, { style: [styles.weekdayText, dayNameTextStyle] }, day))); })),
+            react_1.default.createElement(react_native_1.Text, { style: [styles.weekdayText, dayNameStyle] }, day))); })),
         react_1.default.createElement(react_native_1.View, { style: styles.daysGrid }, calendarDays.map(function (date, index) {
             var dateKey = formatDateKey(date);
             var hasIcon = !!dateIcons[dateKey] || (dateIcons[dateKey] === null && !!defaultIcon);
@@ -86,15 +145,16 @@ var CalendarGrid = function (_a) {
             return (react_1.default.createElement(react_native_1.View, { key: index, style: [
                     styles.dayContainer,
                     {
-                        backgroundColor: dayCellBackgroundColor,
-                        borderColor: dayCellBorderColor
+                        backgroundColor: cellBackgroundColor,
+                        borderColor: cellBorderColor
                     }
                 ] },
-                react_1.default.createElement(CalendarDay_1.default, { date: date, isCurrentMonth: isCurrentMonth(date), isSelected: isDateSelected(date), isToday: isToday(date), onSelectDate: onSelectDate, primaryColor: primaryColor, dayNumberTextStyle: dayNumberTextStyle, showCustomIcon: hasIcon, customIcon: iconToShow })));
+                react_1.default.createElement(CalendarDay_1.default, { date: date, isCurrentMonth: isCurrentMonth(date), isSelected: isDateSelected(date), isToday: isToday(date), onSelectDate: onSelectDate, color: color, textStyle: dayNumberStyle, showCustomIcon: hasIcon, customIcon: iconToShow, locale: locale, outsideMonthOpacity: outsideMonthOpacity, selectedBackgroundColor: selectedBackgroundColor, todayColor: todayColor, dayNumberColor: undefined })));
         }))));
 };
 // Helper function to get all dates that should display in the calendar
 function getCalendarDays(currentMonth, startWeekOnMonday) {
+    if (startWeekOnMonday === void 0) { startWeekOnMonday = false; }
     var result = [];
     // Start from the first day of the month
     var firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
@@ -105,8 +165,8 @@ function getCalendarDays(currentMonth, startWeekOnMonday) {
         ? (dayOfWeek === 0 ? -6 : 1) - dayOfWeek
         : -dayOfWeek;
     startDate.setDate(startDate.getDate() + diff);
-    // Generate 6 weeks of dates (42 days) to ensure we cover the whole month
-    for (var i = 0; i < 42; i++) {
+    // Generate 5 weeks of dates (35 days) instead of 6 weeks (42 days)
+    for (var i = 0; i < 35; i++) {
         var date = new Date(startDate);
         date.setDate(startDate.getDate() + i);
         result.push(date);
@@ -115,6 +175,7 @@ function getCalendarDays(currentMonth, startWeekOnMonday) {
 }
 var styles = react_native_1.StyleSheet.create({
     container: {
+        flexDirection: 'column',
         paddingBottom: 0,
     },
     weekdayHeader: {
@@ -125,7 +186,7 @@ var styles = react_native_1.StyleSheet.create({
         borderBottomColor: '#e0e0e0',
     },
     weekdayItem: {
-        flex: 1,
+        width: '14.285%',
         alignItems: 'center',
     },
     weekdayText: {
@@ -136,20 +197,15 @@ var styles = react_native_1.StyleSheet.create({
     daysGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        paddingHorizontal: 0,
-        paddingTop: 0,
-        paddingBottom: 0,
-        marginBottom: -20,
-        borderLeftWidth: 0.5,
-        borderRightWidth: 0.5,
-        borderColor: '#e0e0e0',
+        width: '100%',
     },
     dayContainer: {
         width: '14.285%',
-        aspectRatio: 1,
-        padding: 0,
-        margin: 0,
+        aspectRatio: 0.8, // Changed from 1 to 0.8 to make cells taller than they are wide
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 0.5,
+        borderColor: '#e0e0e0',
     },
 });
 exports.default = CalendarGrid;

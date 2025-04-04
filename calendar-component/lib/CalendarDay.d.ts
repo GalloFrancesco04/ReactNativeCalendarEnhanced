@@ -6,10 +6,16 @@ interface CalendarDayProps {
     isSelected: boolean;
     isToday: boolean;
     onSelectDate: (date: Date) => void;
-    primaryColor: string;
-    dayNumberTextStyle?: TextStyle;
+    color?: string;
+    textStyle?: TextStyle;
     customIcon?: React.ReactNode;
     showCustomIcon?: boolean | ((date: Date) => boolean);
+    locale?: string;
+    outsideMonthOpacity?: number;
+    selectedBackgroundColor?: string;
+    todayColor?: string;
+    dayNumberColor?: string;
+    selectedDayTextColor?: string;
 }
-declare const CalendarDay: React.FC<CalendarDayProps>;
-export default CalendarDay;
+declare const _default: React.NamedExoticComponent<CalendarDayProps>;
+export default _default;

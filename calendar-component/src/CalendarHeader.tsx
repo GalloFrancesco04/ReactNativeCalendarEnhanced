@@ -1,52 +1,91 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextStyle } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextStyle, ViewStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 interface CalendarHeaderProps {
   currentMonth: Date;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
-  primaryColor: string;
-  iconBorder: string;
-  previousIcon: React.ReactNode;
-  nextIcon: React.ReactNode;
-  headerTextStyle?: TextStyle;
-  headerBackgroundColor?: string;
+  color?: string;                // Simplified from primaryColor
+  iconColor?: string;            // Simplified from iconBorder
+  previousIcon?: React.ReactNode;
+  nextIcon?: React.ReactNode;
+  textStyle?: TextStyle;         // Simplified from headerTextStyle
+  backgroundColor?: string;      // Simplified from headerBackgroundColor
+  locale?: string;
+  style?: ViewStyle;             // Added for overall header container styling
 }
 
 const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   currentMonth,
   onPreviousMonth,
   onNextMonth,
-  primaryColor,
-  iconBorder,
-  previousIcon = <Icon name="chevron-left" size={16} color={iconBorder} />,
-  nextIcon = <Icon name="chevron-right" size={16} color={iconBorder} />,
-  headerTextStyle,
-  headerBackgroundColor = 'white',
+  color = '#2196F3',             // Default primary color
+  iconColor,                     // Will use color if not provided
+  previousIcon,
+  nextIcon,
+  textStyle,
+  backgroundColor = 'white',
+  locale = 'en-US',
+  style,
 }) => {
-  // Format month and year
-  const formattedMonth: string = currentMonth.toLocaleString('default', { month: 'long' });
-  const year: number = currentMonth.getFullYear();
+  // Use iconColor if provided, otherwise fall back to color
+  const finalIconColor = iconColor || color;
+  
+  // Generate default icons if not provided
+  const defaultPreviousIcon = <Icon name="chevron-left" size={16} color={finalIconColor} />;
+  const defaultNextIcon = <Icon name="chevron-right" size={16} color={finalIconColor} />;
+
+  // Format month and year using locale
+  const formattedMonthYear = currentMonth.toLocaleDateString(locale, { 
+    month: 'long', 
+    year: 'numeric' 
+  });
+
+  // Get next and previous month names for accessibility
+  const nextMonth = new Date(currentMonth);
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const nextMonthName = nextMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  
+  const prevMonth = new Date(currentMonth);
+  prevMonth.setMonth(prevMonth.getMonth() - 1);
+  const prevMonthName = prevMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 
   return (
-    <View style={[styles.header, { backgroundColor: headerBackgroundColor as string }]}> 
+    <View 
+      style={[styles.header, { backgroundColor }, style]}
+      accessible={true}
+      accessibilityRole="header"
+    > 
       <TouchableOpacity 
         onPress={onPreviousMonth} 
-        style={[styles.button, { borderColor: iconBorder as string }]}
+        style={[styles.button, { borderColor: finalIconColor }]}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`Go to previous month, ${prevMonthName}`}
+        accessibilityHint="Double tap to navigate to the previous month"
       >
-        {previousIcon}
+        {previousIcon || defaultPreviousIcon}
       </TouchableOpacity>
       
-      <View style={styles.titleContainer}>
-        <Text style={[styles.title, headerTextStyle as TextStyle]}>{formattedMonth} {year}</Text>
+      <View 
+        style={styles.titleContainer}
+        accessible={true}
+        accessibilityRole="header"
+        accessibilityLabel={`Current month is ${formattedMonthYear}`}
+      >
+        <Text style={[styles.title, textStyle]}>{formattedMonthYear}</Text>
       </View>
       
       <TouchableOpacity 
         onPress={onNextMonth}
-        style={[styles.button, { borderColor: iconBorder as string }]}
+        style={[styles.button, { borderColor: finalIconColor }]}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`Go to next month, ${nextMonthName}`}
+        accessibilityHint="Double tap to navigate to the next month"
       >
-        {nextIcon}
+        {nextIcon || defaultNextIcon}
       </TouchableOpacity>
     </View>
   );

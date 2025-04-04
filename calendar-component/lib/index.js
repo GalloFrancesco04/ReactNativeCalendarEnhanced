@@ -13,6 +13,7 @@ var CalendarGrid_1 = require("./CalendarGrid");
 Object.defineProperty(exports, "CalendarGrid", { enumerable: true, get: function () { return __importDefault(CalendarGrid_1).default; } });
 var CalendarDay_1 = require("./CalendarDay");
 Object.defineProperty(exports, "CalendarDay", { enumerable: true, get: function () { return __importDefault(CalendarDay_1).default; } });
+// Removed CalendarViewMode export
 // Re-export the main Calendar component as the default export
 var Calendar_2 = require("./Calendar");
 Object.defineProperty(exports, "default", { enumerable: true, get: function () { return __importDefault(Calendar_2).default; } });
