@@ -4,6 +4,11 @@ import CalendarDay from './CalendarDay';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { formatDateKey } from './utils/dateUtils';
 
+// Utility function to capitalize the first letter of a string
+const capitalizeFirstLetter = (string: string): string => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 interface CalendarGridProps {
   currentMonth: Date;
   selectedDate: Date | null;
@@ -26,6 +31,12 @@ interface CalendarGridProps {
   dayNumberColor?: string;               // Color for day numbers
   selectedDayTextColor?: string;         // Color for selected day text
   formatDateKeyFn?: (date: Date | string) => string;
+  getDateIcon?: (date: Date) => React.ReactNode | null | undefined;
+  iconPatterns?: Array<{
+    matcher: (date: Date) => boolean;
+    icon: React.ReactNode | null;
+    priority?: number;
+  }>;
 }
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({
@@ -46,7 +57,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   outsideMonthOpacity = 0.3,
   selectedBackgroundColor,
   todayColor,
+  dayNumberColor = '#000', // Default day number color
+  selectedDayTextColor = '#FFF', // Default selected day text color
   formatDateKeyFn, // External date formatting function
+  getDateIcon,
+  iconPatterns = [],
 }) => {
   // Get localized day names
   const getLocalizedDaysOfWeek = (): string[] => {
@@ -65,7 +80,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       
       // Get short day name in the specified locale
       const dayName = tempDate.toLocaleDateString(locale, { weekday: 'short' });
-      days.push(dayName);
+      // Capitalize the day name regardless of locale
+      days.push(capitalizeFirstLetter(dayName));
     }
     
     return days;
@@ -162,36 +178,67 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       {/* Render calendar grid */}
       <View style={styles.daysGrid}>
         {calendarDays.map((date: Date, index: number) => {
-          const dateKey: string = formatDateKey(date);
-          const hasIcon: boolean = !!dateIcons[dateKey] || (dateIcons[dateKey] === null && !!defaultIcon);
-          const iconToShow: React.ReactNode = dateIcons[dateKey] === null ? defaultIcon : dateIcons[dateKey] as React.ReactNode;
+          const dateKey = formatDateKey(date);
           
+          // Enhanced icon determination using multiple approaches in priority order
+          let iconToShow: React.ReactNode | null = null;
+          let hasIcon = false;
+          
+          // 1. First check if we have a direct match in dateIcons object
+          if (dateIcons[dateKey] !== undefined) {
+            hasIcon = true;
+            iconToShow = dateIcons[dateKey] === null ? defaultIcon : resolveIcon(dateIcons[dateKey]);
+          } 
+          // 2. Next check if we have a callback function for dynamic icons
+          else if (getDateIcon) {
+            const dynamicIcon = getDateIcon(date);
+            if (dynamicIcon !== undefined) {
+              hasIcon = true;
+              iconToShow = dynamicIcon === null ? defaultIcon : resolveIcon(dynamicIcon);
+            }
+          }
+          // 3. Finally check for pattern matches, sorted by priority
+          else if (iconPatterns.length > 0) {
+            // Sort patterns by priority (highest first) if they have priorities
+            const sortedPatterns = [...iconPatterns].sort((a, b) => 
+              (b.priority || 0) - (a.priority || 0)
+            );
+            
+            // Find the first matching pattern
+            const matchingPattern = sortedPatterns.find(pattern => pattern.matcher(date));
+            if (matchingPattern) {
+              hasIcon = true;
+              iconToShow = matchingPattern.icon === null ? defaultIcon : resolveIcon(matchingPattern.icon);
+            }
+          }
+
           return (
-            <View 
-              key={index} 
+            <View
+              key={index}
               style={[
-                styles.dayContainer, 
-                { 
-                  backgroundColor: cellBackgroundColor as string, 
-                  borderColor: cellBorderColor as string 
-                }
+                styles.dayContainer,
+                {
+                  backgroundColor: cellBackgroundColor,
+                  borderColor: cellBorderColor,
+                },
               ]}
-            > 
+            >
               <CalendarDay
                 date={date}
                 isCurrentMonth={isCurrentMonth(date)}
                 isSelected={isDateSelected(date)}
                 isToday={isToday(date)}
                 onSelectDate={onSelectDate}
-                color={color}  // Changed from primaryColor to color
-                textStyle={dayNumberStyle}  // Changed from dayNumberTextStyle to textStyle
-                showCustomIcon={hasIcon}
+                color={color}
+                textStyle={dayNumberStyle}
                 customIcon={iconToShow}
+                showCustomIcon={hasIcon}
                 locale={locale}
-                outsideMonthOpacity={outsideMonthOpacity}  // Changed from outsideMonthDayOpacity
-                selectedBackgroundColor={selectedBackgroundColor}  // Changed from selectedDayBackgroundColor
-                todayColor={todayColor}  // Changed from todayHighlightColor
-                dayNumberColor={undefined}
+                outsideMonthOpacity={outsideMonthOpacity}
+                selectedBackgroundColor={selectedBackgroundColor}
+                todayColor={todayColor}
+                dayNumberColor={dayNumberColor}
+                selectedDayTextColor={selectedDayTextColor}
               />
             </View>
           );

@@ -31,21 +31,21 @@ export default function Index() {
       {
         id: '3',
         title: 'Gym Session',
-        date: new Date(2025, 3, 21), // April 21, 2025
+        date: new Date(2025, 3, 6), // April 6, 2025 (month is 0-indexed, so 3 = April)
         color: '#388E3C'
       },
       {
         id: '4',
         title: 'Product Launch',
         description: 'New feature release',
-        date: new Date(2025, 3, 5), // April 5, 2025
+        date: new Date(2025, 3, 7), // April 7, 2025 (month is 0-indexed, so 3 = April)
         color: '#FF9800'
       },
       {
         id: '5',
         title: 'Team Building',
         description: 'Escape room activity',
-        date: new Date(2025, 3, 12), // April 12, 2025
+        date: new Date(2025, 3, 8), // April 8, 2025 (month is 0-indexed, so 3 = April)
         color: '#5E35B1'
       }
     ];
@@ -83,19 +83,44 @@ export default function Index() {
     '2025-04-22': null,
   };
 
+  // Example of an icon-only today button
+  const todayIconOnlyButton = {
+    showText: false,
+    icon: <Icon name="calendar-o" size={20} color="white" />,
+    backgroundColor: '#4285F4',
+    borderRadius: 30,
+    width: 56,
+    height: 56,
+    style: {
+      justifyContent: 'center',
+      alignItems: 'center'
+    }
+  };
+
+  // Example of a flat today button with borders
+  const todayFlatButton = {
+    text: 'Jump to Today',
+    backgroundColor: 'transparent',
+    textColor: '#4285F4',
+    borderWidth: 2,
+    borderColor: '#4285F4',
+    borderRadius: 8,
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Calendar 
         // Core functionality props
         initialDate={selectedDate || new Date()} 
         onSelectDate={handleDateSelect}
-        locale="en-US"
+        locale="it-IT"
         startWeekOnMonday={true}
         
         // Styling props with all available color options
         color="#4285F4"                      // Primary color (buttons, selected dates)
         backgroundColor="#FFFFFF"            // Overall calendar background
         headerBackgroundColor="#F3F8FF"      // Header section background
+        headerColor="#2A4374"                // Header text color (month/year title)
         cellBackgroundColor="#FFFFFF"        // Day cell background
         cellBorderColor="#E0E0E0"            // Day cell border
         iconColor="#4285F4"                  // Icon colors
@@ -120,7 +145,25 @@ export default function Index() {
         
         // Date icons
         dateIcons={dateIcons} 
-        defaultIcon={<Icon name="circle" size={6} color="gray" />}
+        defaultIcon={<Icon name="circle" size={10} color="gray" />}
+        showCustomIcon={true}
+        
+        // Today button - using single consolidated prop
+        todayButtonOptions={{
+          text: 'Today',
+          icon: <Icon name="calendar" size={16} color="white" />,
+          iconPosition: 'left',
+          backgroundColor: '#4285F4',
+          textColor: 'white',
+          borderRadius: 20,
+          elevation: 3,
+          shadowConfig: {
+            color: '#000',
+            opacity: 0.3,
+            offset: { width: 0, height: 2 },
+            radius: 3
+          }
+        }}
         
         // Events
         events={events}
@@ -130,20 +173,13 @@ export default function Index() {
         
         // UI Options
         readOnly={false}
-        showAddEventButton={true}
+        showAddEventButton={false}
         buttonSize="medium" // Options: 'small', 'medium', 'large'
         buttonsContainerStyle={{ 
           backgroundColor: '#F0F8FF',
           borderTopWidth: 1,
           borderTopColor: '#E0E0E0',
           paddingVertical: 12
-        }}
-        
-        // Today button
-        todayButtonText="Today"
-        todayButtonStyle={{
-          backgroundColor: '#4285F4',
-          borderRadius: 20
         }}
       />
     </SafeAreaView>

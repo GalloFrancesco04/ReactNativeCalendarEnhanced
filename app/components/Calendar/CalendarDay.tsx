@@ -1,6 +1,11 @@
 import React, { useMemo, useCallback } from 'react';
 import { TouchableOpacity, Text, StyleSheet, TextStyle, View } from 'react-native';
 
+// Utility function to capitalize the first letter of a string
+const capitalizeFirstLetter = (string: string): string => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 interface CalendarDayProps {
   date: Date;
   isCurrentMonth: boolean;
@@ -97,12 +102,16 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
 
   // Format the date for accessibility labeling - memoized
   const accessibilityProps = useMemo(() => {
-    const formattedDate = date.toLocaleDateString(locale, {
+    // Get the formatted date from locale
+    let formattedDate = date.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
+
+    // Capitalize the first letters of month and weekday names
+    formattedDate = formattedDate.replace(/(?<=^|[,\s])([a-z])/g, (match) => match.toUpperCase());
 
     // Generate appropriate accessibility state
     const accessibilityState = {
@@ -139,7 +148,9 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
       {...accessibilityProps}
     >
       <Text style={dayTextStyle}>{date.getDate()}</Text>
-      {shouldShowIcon && customIcon && <View style={styles.iconContainer}>{customIcon}</View>} 
+      {customIcon && (
+        <View style={styles.iconContainerBottomRight}>{customIcon}</View>
+      )} 
     </TouchableOpacity>
   );
 };
@@ -163,8 +174,20 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     position: 'absolute',
+    bottom: 2,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  iconContainerBottomRight: {
+    position: 'absolute',
     bottom: 4,
     right: 4,
+    width: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

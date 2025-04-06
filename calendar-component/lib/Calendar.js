@@ -79,21 +79,38 @@ var Calendar = function (_a) {
     dayNumberColor = _r === void 0 ? '#000' : _r, // Default day number color
     _s = _a.selectedDayTextColor, // Default day number color
     selectedDayTextColor = _s === void 0 ? '#FFF' : _s, // Default selected day text color
-    headerStyle = _a.headerStyle, dayNameStyle = _a.dayNameStyle, dayNumberStyle = _a.dayNumberStyle, previousIcon = _a.previousIcon, nextIcon = _a.nextIcon, _t = _a.todayButtonText, todayButtonText = _t === void 0 ? 'Today' : _t, todayButtonStyle = _a.todayButtonStyle, todayButtonTextStyle = _a.todayButtonTextStyle, customIcon = _a.customIcon, _u = _a.showCustomIcon, showCustomIcon = _u === void 0 ? false : _u, _v = _a.dateIcons, dateIcons = _v === void 0 ? {} : _v, _w = _a.defaultIcon, defaultIcon = _w === void 0 ? null : _w, _x = _a.events, events = _x === void 0 ? [] : _x, onAddEvent = _a.onAddEvent, onUpdateEvent = _a.onUpdateEvent, onDeleteEvent = _a.onDeleteEvent, _y = _a.readOnly, readOnly = _y === void 0 ? false : _y, _z = _a.showAddEventButton, showAddEventButton = _z === void 0 ? true : _z, // Default to showing the Add Event button
-    buttonsContainerStyle = _a.buttonsContainerStyle, _0 = _a.buttonSize, buttonSize = _0 === void 0 ? 'medium' : _0;
+    headerStyle = _a.headerStyle, dayNameStyle = _a.dayNameStyle, dayNumberStyle = _a.dayNumberStyle, previousIcon = _a.previousIcon, nextIcon = _a.nextIcon, _t = _a.todayButtonText, todayButtonText = _t === void 0 ? 'Today' : _t, todayButtonStyle = _a.todayButtonStyle, todayButtonTextStyle = _a.todayButtonTextStyle, todayButtonOptions = _a.todayButtonOptions, customIcon = _a.customIcon, _u = _a.showCustomIcon, showCustomIcon = _u === void 0 ? false : _u, _v = _a.dateIcons, dateIcons = _v === void 0 ? {} : _v, _w = _a.defaultIcon, defaultIcon = _w === void 0 ? null : _w, getDateIcon = _a.getDateIcon, _x = _a.iconPatterns, iconPatterns = _x === void 0 ? [] : _x, _y = _a.events, events = _y === void 0 ? [] : _y, onAddEvent = _a.onAddEvent, onUpdateEvent = _a.onUpdateEvent, onDeleteEvent = _a.onDeleteEvent, _z = _a.readOnly, readOnly = _z === void 0 ? false : _z, _0 = _a.showAddEventButton, showAddEventButton = _0 === void 0 ? true : _0, // Default to showing the Add Event button
+    buttonsContainerStyle = _a.buttonsContainerStyle, _1 = _a.buttonSize, buttonSize = _1 === void 0 ? 'medium' : _1;
     // Default theme values
     var defaultEventColor = '#1976D2';
     var eventColors = ['#1976D2', '#E53935', '#43A047', '#FB8C00', '#5E35B1'];
     // State for calendar - initialize with today's date
-    var _1 = (0, react_1.useState)(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1)), currentMonth = _1[0], setCurrentMonth = _1[1];
-    var _2 = (0, react_1.useState)(initialDate), selectedDate = _2[0], setSelectedDate = _2[1];
+    var _2 = (0, react_1.useState)(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1)), currentMonth = _2[0], setCurrentMonth = _2[1];
+    var _3 = (0, react_1.useState)(initialDate), selectedDate = _3[0], setSelectedDate = _3[1];
     // State for events
-    var _3 = (0, react_1.useState)(null), selectedEvent = _3[0], setSelectedEvent = _3[1];
-    var _4 = (0, react_1.useState)(false), eventModalVisible = _4[0], setEventModalVisible = _4[1];
-    var _5 = (0, react_1.useState)(''), eventTitle = _5[0], setEventTitle = _5[1];
-    var _6 = (0, react_1.useState)(''), eventDescription = _6[0], setEventDescription = _6[1];
-    var _7 = (0, react_1.useState)(defaultEventColor), eventColor = _7[0], setEventColor = _7[1];
-    var _8 = (0, react_1.useState)(false), showDayEvents = _8[0], setShowDayEvents = _8[1];
+    var _4 = (0, react_1.useState)(null), selectedEvent = _4[0], setSelectedEvent = _4[1];
+    var _5 = (0, react_1.useState)(false), eventModalVisible = _5[0], setEventModalVisible = _5[1];
+    var _6 = (0, react_1.useState)(''), eventTitle = _6[0], setEventTitle = _6[1];
+    var _7 = (0, react_1.useState)(''), eventDescription = _7[0], setEventDescription = _7[1];
+    var _8 = (0, react_1.useState)(defaultEventColor), eventColor = _8[0], setEventColor = _8[1];
+    var _9 = (0, react_1.useState)(false), showDayEvents = _9[0], setShowDayEvents = _9[1];
+    // Process todayButtonOptions to handle both string and object formats
+    var processedButtonOptions = (0, react_1.useMemo)(function () {
+        // If todayButtonOptions is a string, treat it as the button text
+        if (typeof todayButtonOptions === 'string') {
+            return { text: todayButtonOptions };
+        }
+        // If it's an object, use it directly
+        if (todayButtonOptions && typeof todayButtonOptions === 'object') {
+            return todayButtonOptions;
+        }
+        // If not provided, create from legacy props for backward compatibility
+        return {
+            text: todayButtonText,
+            style: todayButtonStyle,
+            textStyle: todayButtonTextStyle
+        };
+    }, [todayButtonOptions, todayButtonText, todayButtonStyle, todayButtonTextStyle]);
     // Update current date reference when initialDate changes
     (0, react_1.useEffect)(function () {
         if (initialDate.getTime() !== (selectedDate === null || selectedDate === void 0 ? void 0 : selectedDate.getTime())) {
@@ -247,19 +264,44 @@ var Calendar = function (_a) {
     var buttonSizeStyles = (0, react_1.useMemo)(function () { return getButtonSizeStyles(buttonSize); }, [buttonSize, getButtonSizeStyles]);
     return (react_1.default.createElement(react_native_1.View, { style: [styles.container, { backgroundColor: backgroundColor }] },
         react_1.default.createElement(CalendarHeader_1.default, { currentMonth: currentMonth, onPreviousMonth: goToPreviousMonth, onNextMonth: goToNextMonth, color: color, textStyle: headerStyle || {}, locale: locale, previousIcon: previousIcon, nextIcon: nextIcon }),
-        react_1.default.createElement(CalendarGrid_1.default, { currentMonth: currentMonth, selectedDate: selectedDate, onSelectDate: handleDateSelect, color: color, startWeekOnMonday: startWeekOnMonday, dayNameStyle: undefined, dayNumberStyle: undefined, cellBackgroundColor: cellBackgroundColor, customIcon: customIcon, showCustomIcon: showCustomIcon, locale: locale, outsideMonthOpacity: outsideMonthOpacity, selectedBackgroundColor: selectedBackgroundColor, todayColor: todayHighlightColor, dayNumberColor: dayNumberColor, selectedDayTextColor: selectedDayTextColor }),
+        react_1.default.createElement(CalendarGrid_1.default, { currentMonth: currentMonth, selectedDate: selectedDate, onSelectDate: handleDateSelect, color: color, startWeekOnMonday: startWeekOnMonday, dayNameStyle: dayNameStyle, dayNumberStyle: dayNumberStyle, cellBackgroundColor: cellBackgroundColor, cellBorderColor: cellBorderColor, customIcon: customIcon, showCustomIcon: showCustomIcon, dateIcons: generateEventIcons, defaultIcon: defaultIcon, locale: locale, outsideMonthOpacity: outsideMonthOpacity, selectedBackgroundColor: selectedBackgroundColor, todayColor: todayHighlightColor, dayNameColor: dayNameColor, dayNumberColor: dayNumberColor, selectedDayTextColor: selectedDayTextColor }),
         react_1.default.createElement(react_native_1.View, { style: [styles.controlsContainer, buttonsContainerStyle] },
-            react_1.default.createElement(react_native_1.TouchableOpacity, { style: [
+            ((processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.visible) !== false) && (react_1.default.createElement(react_native_1.TouchableOpacity, { style: [
                     styles.todayButton,
-                    todayButtonStyle,
-                    { backgroundColor: color },
-                    { paddingVertical: buttonSizeStyles.paddingVertical, paddingHorizontal: buttonSizeStyles.paddingHorizontal }
-                ], onPress: goToToday, accessible: true, accessibilityRole: "button", accessibilityLabel: "Go to today's date", accessibilityHint: "Navigates the calendar to today's date" },
-                react_1.default.createElement(react_native_1.Text, { style: [
-                        styles.todayButtonText,
-                        todayButtonTextStyle,
-                        { color: 'white', fontSize: buttonSizeStyles.fontSize }
-                    ] }, todayButtonText)),
+                    // Apply legacy style first for backward compatibility
+                    processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.style,
+                    // Then apply enhanced options
+                    {
+                        backgroundColor: (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.backgroundColor) || color,
+                        borderRadius: (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.borderRadius) !== undefined ? processedButtonOptions.borderRadius : 25,
+                        borderWidth: processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.borderWidth,
+                        borderColor: processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.borderColor,
+                        elevation: (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.elevation) !== undefined ? processedButtonOptions.elevation : 2,
+                        width: processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.width,
+                        height: processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.height,
+                        paddingVertical: buttonSizeStyles.paddingVertical,
+                        paddingHorizontal: buttonSizeStyles.paddingHorizontal
+                    },
+                    // Shadow config as separate style object
+                    (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.shadowConfig) ? {
+                        shadowColor: processedButtonOptions.shadowConfig.color || '#000',
+                        shadowOffset: processedButtonOptions.shadowConfig.offset || { width: 0, height: 1 },
+                        shadowOpacity: processedButtonOptions.shadowConfig.opacity || 0.2,
+                        shadowRadius: processedButtonOptions.shadowConfig.radius || 1.5,
+                    } : undefined
+                ].filter(Boolean), onPress: goToToday, disabled: processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.disabled, accessible: true, accessibilityRole: "button", accessibilityLabel: (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.accessibilityLabel) || "Go to today's date", accessibilityHint: (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.accessibilityHint) || "Navigates the calendar to today's date" },
+                react_1.default.createElement(react_native_1.View, { style: { flexDirection: (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.iconPosition) === 'right' ? 'row-reverse' : 'row', alignItems: 'center' } },
+                    (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.icon) && (react_1.default.createElement(react_native_1.View, { style: { marginRight: (processedButtonOptions.iconPosition !== 'right' && processedButtonOptions.showText !== false) ? 6 : 0,
+                            marginLeft: (processedButtonOptions.iconPosition === 'right' && processedButtonOptions.showText !== false) ? 6 : 0 } }, processedButtonOptions.icon)),
+                    (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.showText) !== false && (react_1.default.createElement(react_native_1.Text, { style: [
+                            styles.todayButtonText,
+                            processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.textStyle,
+                            {
+                                color: (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.textColor) || 'white',
+                                fontSize: buttonSizeStyles.fontSize,
+                                opacity: (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.disabled) ? 0.5 : 1
+                            }
+                        ] }, (processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.text) || 'Today'))))),
             !readOnly && showAddEventButton && selectedDate && (react_1.default.createElement(react_native_1.TouchableOpacity, { style: [styles.addEventButton, { backgroundColor: color }], onPress: handleAddEventPress, accessible: true, accessibilityRole: "button", accessibilityLabel: "Add new event", accessibilityHint: "Opens form to add a new event on the selected date" },
                 react_1.default.createElement(react_native_1.Text, { style: [styles.todayButtonText, { color: 'white' }] }, "Add Event")))),
         react_1.default.createElement(react_native_1.Modal, { visible: eventModalVisible, transparent: true, animationType: "slide", onRequestClose: function () { return setEventModalVisible(false); } },

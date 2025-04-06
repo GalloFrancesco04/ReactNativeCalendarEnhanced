@@ -10,6 +10,7 @@ interface CalendarHeaderProps {
     nextIcon?: React.ReactNode;
     textStyle?: TextStyle;
     backgroundColor?: string;
+    headerColor?: string;
     locale?: string;
     style?: ViewStyle;
 }

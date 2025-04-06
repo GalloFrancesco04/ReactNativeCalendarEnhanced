@@ -130,7 +130,7 @@ var CalendarDay = function (_a) {
     }, [date, locale, isSelected, isToday, isCurrentMonth]);
     return (react_1.default.createElement(react_native_1.TouchableOpacity, __assign({ style: dayContainerStyle, onPress: handlePress, activeOpacity: 0.6, accessible: true }, accessibilityProps),
         react_1.default.createElement(react_native_1.Text, { style: dayTextStyle }, date.getDate()),
-        shouldShowIcon && customIcon && react_1.default.createElement(react_native_1.View, { style: styles.iconContainer }, customIcon)));
+        customIcon && (react_1.default.createElement(react_native_1.View, { style: styles.iconContainerBottomRight }, customIcon))));
 };
 var styles = react_native_1.StyleSheet.create({
     dayContainer: {
@@ -151,8 +151,20 @@ var styles = react_native_1.StyleSheet.create({
     },
     iconContainer: {
         position: 'absolute',
+        bottom: 2,
+        alignSelf: 'center',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1,
+    },
+    iconContainerBottomRight: {
+        position: 'absolute',
         bottom: 4,
         right: 4,
+        width: 16,
+        height: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 exports.default = react_1.default.memo(CalendarDay);

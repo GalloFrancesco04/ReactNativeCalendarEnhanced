@@ -2,6 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextStyle, ViewStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
+// Utility function to capitalize the first letter of a string
+const capitalizeFirstLetter = (string: string): string => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 interface CalendarHeaderProps {
   currentMonth: Date;
   onPreviousMonth: () => void;
@@ -12,6 +17,7 @@ interface CalendarHeaderProps {
   nextIcon?: React.ReactNode;
   textStyle?: TextStyle;         // Simplified from headerTextStyle
   backgroundColor?: string;      // Simplified from headerBackgroundColor
+  headerColor?: string;          // Color for the header text
   locale?: string;
   style?: ViewStyle;             // Added for overall header container styling
 }
@@ -26,6 +32,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   nextIcon,
   textStyle,
   backgroundColor = 'white',
+  headerColor,                   // Color for header text
   locale = 'en-US',
   style,
 }) => {
@@ -37,19 +44,24 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   const defaultNextIcon = <Icon name="chevron-right" size={16} color={finalIconColor} />;
 
   // Format month and year using locale
-  const formattedMonthYear = currentMonth.toLocaleDateString(locale, { 
+  let formattedMonthYear = currentMonth.toLocaleDateString(locale, { 
     month: 'long', 
     year: 'numeric' 
   });
+  
+  // Capitalize the first letter of month name
+  formattedMonthYear = capitalizeFirstLetter(formattedMonthYear);
 
   // Get next and previous month names for accessibility
   const nextMonth = new Date(currentMonth);
   nextMonth.setMonth(nextMonth.getMonth() + 1);
-  const nextMonthName = nextMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  let nextMonthName = nextMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  nextMonthName = capitalizeFirstLetter(nextMonthName);
   
   const prevMonth = new Date(currentMonth);
   prevMonth.setMonth(prevMonth.getMonth() - 1);
-  const prevMonthName = prevMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  let prevMonthName = prevMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  prevMonthName = capitalizeFirstLetter(prevMonthName);
 
   return (
     <View 
@@ -74,7 +86,11 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
         accessibilityRole="header"
         accessibilityLabel={`Current month is ${formattedMonthYear}`}
       >
-        <Text style={[styles.title, textStyle]}>{formattedMonthYear}</Text>
+        <Text style={[
+          styles.title, 
+          textStyle,
+          headerColor ? { color: headerColor } : null
+        ]}>{formattedMonthYear}</Text>
       </View>
       
       <TouchableOpacity 

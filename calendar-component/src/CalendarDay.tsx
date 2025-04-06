@@ -139,7 +139,9 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
       {...accessibilityProps}
     >
       <Text style={dayTextStyle}>{date.getDate()}</Text>
-      {shouldShowIcon && customIcon && <View style={styles.iconContainer}>{customIcon}</View>} 
+      {customIcon && (
+        <View style={styles.iconContainerBottomRight}>{customIcon}</View>
+      )} 
     </TouchableOpacity>
   );
 };
@@ -163,8 +165,20 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     position: 'absolute',
+    bottom: 2,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  iconContainerBottomRight: {
+    position: 'absolute',
     bottom: 4,
     right: 4,
+    width: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

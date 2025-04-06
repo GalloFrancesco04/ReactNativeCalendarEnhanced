@@ -32,6 +32,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -47,7 +56,11 @@ var CalendarGrid = function (_a) {
     _f = _a.locale, // Default to no icon if not specified
     locale = _f === void 0 ? 'en-US' : _f, // Default to English
     _g = _a.outsideMonthOpacity, // Default to English
-    outsideMonthOpacity = _g === void 0 ? 0.3 : _g, selectedBackgroundColor = _a.selectedBackgroundColor, todayColor = _a.todayColor, formatDateKeyFn = _a.formatDateKeyFn;
+    outsideMonthOpacity = _g === void 0 ? 0.3 : _g, selectedBackgroundColor = _a.selectedBackgroundColor, todayColor = _a.todayColor, _h = _a.dayNumberColor, dayNumberColor = _h === void 0 ? '#000' : _h, // Default day number color
+    _j = _a.selectedDayTextColor, // Default day number color
+    selectedDayTextColor = _j === void 0 ? '#FFF' : _j, // Default selected day text color
+    formatDateKeyFn = _a.formatDateKeyFn, // External date formatting function
+    getDateIcon = _a.getDateIcon, _k = _a.iconPatterns, iconPatterns = _k === void 0 ? [] : _k;
     // Get localized day names
     var getLocalizedDaysOfWeek = function () {
         var days = [];
@@ -140,16 +153,43 @@ var CalendarGrid = function (_a) {
             react_1.default.createElement(react_native_1.Text, { style: [styles.weekdayText, dayNameStyle] }, day))); })),
         react_1.default.createElement(react_native_1.View, { style: styles.daysGrid }, calendarDays.map(function (date, index) {
             var dateKey = formatDateKey(date);
-            var hasIcon = !!dateIcons[dateKey] || (dateIcons[dateKey] === null && !!defaultIcon);
-            var iconToShow = dateIcons[dateKey] === null ? defaultIcon : dateIcons[dateKey];
+            // Enhanced icon determination using multiple approaches in priority order
+            var iconToShow = null;
+            var hasIcon = false;
+            // 1. First check if we have a direct match in dateIcons object
+            if (dateIcons[dateKey] !== undefined) {
+                hasIcon = true;
+                iconToShow = dateIcons[dateKey] === null ? defaultIcon : resolveIcon(dateIcons[dateKey]);
+            }
+            // 2. Next check if we have a callback function for dynamic icons
+            else if (getDateIcon) {
+                var dynamicIcon = getDateIcon(date);
+                if (dynamicIcon !== undefined) {
+                    hasIcon = true;
+                    iconToShow = dynamicIcon === null ? defaultIcon : resolveIcon(dynamicIcon);
+                }
+            }
+            // 3. Finally check for pattern matches, sorted by priority
+            else if (iconPatterns.length > 0) {
+                // Sort patterns by priority (highest first) if they have priorities
+                var sortedPatterns = __spreadArray([], iconPatterns, true).sort(function (a, b) {
+                    return (b.priority || 0) - (a.priority || 0);
+                });
+                // Find the first matching pattern
+                var matchingPattern = sortedPatterns.find(function (pattern) { return pattern.matcher(date); });
+                if (matchingPattern) {
+                    hasIcon = true;
+                    iconToShow = matchingPattern.icon === null ? defaultIcon : resolveIcon(matchingPattern.icon);
+                }
+            }
             return (react_1.default.createElement(react_native_1.View, { key: index, style: [
                     styles.dayContainer,
                     {
                         backgroundColor: cellBackgroundColor,
-                        borderColor: cellBorderColor
-                    }
+                        borderColor: cellBorderColor,
+                    },
                 ] },
-                react_1.default.createElement(CalendarDay_1.default, { date: date, isCurrentMonth: isCurrentMonth(date), isSelected: isDateSelected(date), isToday: isToday(date), onSelectDate: onSelectDate, color: color, textStyle: dayNumberStyle, showCustomIcon: hasIcon, customIcon: iconToShow, locale: locale, outsideMonthOpacity: outsideMonthOpacity, selectedBackgroundColor: selectedBackgroundColor, todayColor: todayColor, dayNumberColor: undefined })));
+                react_1.default.createElement(CalendarDay_1.default, { date: date, isCurrentMonth: isCurrentMonth(date), isSelected: isDateSelected(date), isToday: isToday(date), onSelectDate: onSelectDate, color: color, textStyle: dayNumberStyle, customIcon: iconToShow, showCustomIcon: hasIcon, locale: locale, outsideMonthOpacity: outsideMonthOpacity, selectedBackgroundColor: selectedBackgroundColor, todayColor: todayColor, dayNumberColor: dayNumberColor, selectedDayTextColor: selectedDayTextColor })));
         }))));
 };
 // Helper function to get all dates that should display in the calendar

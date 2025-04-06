@@ -5,6 +5,16 @@ import CalendarGrid from './CalendarGrid';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { formatDateKey } from './utils/dateUtils';
 
+// Utility function to capitalize the first letter of a string
+const capitalizeFirstLetter = (string: string): string => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+// Utility function to capitalize all words in a date string
+const capitalizeDateParts = (dateString: string): string => {
+  return dateString.replace(/(?<=^|[,\s])([a-z])/g, (match) => match.toUpperCase());
+};
+
 // Define the Event type
 export interface CalendarEvent {
   id: string;
@@ -25,6 +35,7 @@ export interface CalendarProps {
   color?: string;                          // Primary color (was primaryColor)
   backgroundColor?: string;                // Calendar background (was calendarBackgroundColor)
   headerBackgroundColor?: string;          // Background color for the header
+  headerColor?: string;                    // Color for the header text
   cellBackgroundColor?: string;            // Day cell background (was dayCellBackgroundColor)
   cellBorderColor?: string;                // Day cell border (was dayCellBorderColor)
   iconColor?: string;                      // Border/color for navigation icons (was iconBorderColor)
@@ -47,16 +58,30 @@ export interface CalendarProps {
   previousIcon?: React.ReactNode;
   nextIcon?: React.ReactNode;
   
-  // Today button
+  // Today button options (consolidated prop)
+  todayButtonOptions?: TodayButtonOptions | string; // Can be a string (for backward compatibility) or full options object
+  
+  // Legacy props (marked as deprecated)
+  /** @deprecated Use todayButtonOptions.text instead */
   todayButtonText?: string;
+  /** @deprecated Use todayButtonOptions.style instead */
   todayButtonStyle?: ViewStyle;
+  /** @deprecated Use todayButtonOptions.textStyle instead */
   todayButtonTextStyle?: TextStyle;
   
-  // Icons for dates
-  customIcon?: React.ReactNode;
-  showCustomIcon?: boolean | ((date: Date) => boolean);
+  // Icons for dates - enhanced API
   dateIcons?: { [key: string]: React.ReactNode | null };
   defaultIcon?: React.ReactNode;
+  showCustomIcon?: boolean | ((date: Date) => boolean);
+  customIcon?: React.ReactNode;            // Custom icon to display for dates
+  
+  // New enhanced icon API
+  getDateIcon?: (date: Date) => React.ReactNode | null | undefined;
+  iconPatterns?: Array<{
+    matcher: (date: Date) => boolean;
+    icon: React.ReactNode | null;
+    priority?: number;  // Higher numbers take precedence
+  }>;
   
   // Events
   events?: CalendarEvent[];
@@ -71,6 +96,34 @@ export interface CalendarProps {
   buttonSize?: 'small' | 'medium' | 'large';
 }
 
+// Today Button specific props
+export interface TodayButtonOptions {
+  text?: string;                       // Button text (replaces todayButtonText)
+  icon?: React.ReactNode;              // Optional icon to show with/instead of text
+  iconPosition?: 'left' | 'right';     // Position of icon relative to text
+  showText?: boolean;                  // Whether to show text with icon
+  style?: ViewStyle;                   // Main button style (replaces todayButtonStyle)
+  textStyle?: TextStyle;               // Text style (replaces todayButtonTextStyle)
+  backgroundColor?: string;            // Button background color
+  textColor?: string;                  // Text color
+  disabled?: boolean;                  // Whether button is disabled
+  visible?: boolean;                   // Whether button is visible
+  width?: number | string;             // Custom width
+  height?: number | string;            // Custom height
+  borderRadius?: number;               // Border radius
+  borderWidth?: number;                // Border width
+  borderColor?: string;                // Border color
+  elevation?: number;                  // Android elevation
+  shadowConfig?: {                     // iOS shadow configuration
+    color?: string;
+    opacity?: number;
+    offset?: { width: number; height: number };
+    radius?: number;
+  };
+  accessibilityLabel?: string;         // Custom accessibility label
+  accessibilityHint?: string;          // Custom accessibility hint
+}
+
 const Calendar: React.FC<CalendarProps> = ({
   initialDate = new Date(), // Default to today's date if not provided
   onSelectDate,
@@ -79,6 +132,7 @@ const Calendar: React.FC<CalendarProps> = ({
   color = '#2196F3', // Default primary color
   backgroundColor = 'white', // Default calendar background
   headerBackgroundColor = 'white', // Default header background
+  headerColor,
   cellBackgroundColor = 'white', // Default day cell background
   cellBorderColor = '#e0e0e0', // Default day cell border
   iconColor = '#2196F3', // Default icon color
@@ -97,10 +151,13 @@ const Calendar: React.FC<CalendarProps> = ({
   todayButtonText = 'Today',
   todayButtonStyle,
   todayButtonTextStyle,
+  todayButtonOptions,
   customIcon,
   showCustomIcon = false,
   dateIcons = {},
   defaultIcon = null,
+  getDateIcon,
+  iconPatterns = [],
   events = [],
   onAddEvent,
   onUpdateEvent,
@@ -127,6 +184,26 @@ const Calendar: React.FC<CalendarProps> = ({
   const [eventDescription, setEventDescription] = useState<string>('');
   const [eventColor, setEventColor] = useState<string>(defaultEventColor);
   const [showDayEvents, setShowDayEvents] = useState<boolean>(false);
+  
+  // Process todayButtonOptions to handle both string and object formats
+  const processedButtonOptions = useMemo(() => {
+    // If todayButtonOptions is a string, treat it as the button text
+    if (typeof todayButtonOptions === 'string') {
+      return { text: todayButtonOptions };
+    }
+    
+    // If it's an object, use it directly
+    if (todayButtonOptions && typeof todayButtonOptions === 'object') {
+      return todayButtonOptions;
+    }
+    
+    // If not provided, create from legacy props for backward compatibility
+    return {
+      text: todayButtonText,
+      style: todayButtonStyle,
+      textStyle: todayButtonTextStyle
+    };
+  }, [todayButtonOptions, todayButtonText, todayButtonStyle, todayButtonTextStyle]);
   
   // Update current date reference when initialDate changes
   useEffect(() => {
@@ -311,7 +388,10 @@ const Calendar: React.FC<CalendarProps> = ({
         onPreviousMonth={goToPreviousMonth}
         onNextMonth={goToNextMonth}
         color={color}
+        iconColor={iconColor}
         textStyle={headerStyle || {}}
+        backgroundColor={headerBackgroundColor}
+        headerColor={headerColor || headerTextColor}
         locale={locale}
         previousIcon={previousIcon}
         nextIcon={nextIcon}
@@ -324,43 +404,87 @@ const Calendar: React.FC<CalendarProps> = ({
           onSelectDate={handleDateSelect}
           color={color}
           startWeekOnMonday={startWeekOnMonday}
-          dayNameStyle={undefined}
-          dayNumberStyle={undefined}
+          dayNameStyle={dayNameStyle}
+          dayNumberStyle={dayNumberStyle}
           cellBackgroundColor={cellBackgroundColor}
+          cellBorderColor={cellBorderColor}
           customIcon={customIcon}
           showCustomIcon={showCustomIcon}
+          dateIcons={generateEventIcons}
+          defaultIcon={defaultIcon}
           locale={locale}
           outsideMonthOpacity={outsideMonthOpacity}
           selectedBackgroundColor={selectedBackgroundColor}
           todayColor={todayHighlightColor}
+          dayNameColor={dayNameColor}
           dayNumberColor={dayNumberColor}
           selectedDayTextColor={selectedDayTextColor}
         />
       
       {/* Control buttons at the bottom of the calendar */}
       <View style={[styles.controlsContainer, buttonsContainerStyle]}>
-        <TouchableOpacity 
-          style={[
-            styles.todayButton, 
-            todayButtonStyle, 
-            { backgroundColor: color },
-            { paddingVertical: buttonSizeStyles.paddingVertical, paddingHorizontal: buttonSizeStyles.paddingHorizontal }
-          ]}
-          onPress={goToToday}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Go to today's date"
-          accessibilityHint="Navigates the calendar to today's date"
-        >
-          <Text style={[
-            styles.todayButtonText, 
-            todayButtonTextStyle, 
-            { color: 'white', fontSize: buttonSizeStyles.fontSize }
-          ]}>
-            {todayButtonText}
-          </Text>
-        </TouchableOpacity>
+        {/* Enhanced Today button with support for all customization options */}
+        {(processedButtonOptions?.visible !== false) && (
+          <TouchableOpacity 
+            style={[
+              styles.todayButton, 
+              // Apply legacy style first for backward compatibility
+              processedButtonOptions?.style,
+              // Then apply enhanced options
+              {
+                backgroundColor: processedButtonOptions?.backgroundColor || color,
+                borderRadius: processedButtonOptions?.borderRadius !== undefined ? processedButtonOptions.borderRadius : 25,
+                borderWidth: processedButtonOptions?.borderWidth,
+                borderColor: processedButtonOptions?.borderColor,
+                elevation: processedButtonOptions?.elevation !== undefined ? processedButtonOptions.elevation : 2,
+                width: processedButtonOptions?.width,
+                height: processedButtonOptions?.height,
+                paddingVertical: buttonSizeStyles.paddingVertical,
+                paddingHorizontal: buttonSizeStyles.paddingHorizontal
+              } as ViewStyle,
+              // Shadow config as separate style object
+              processedButtonOptions?.shadowConfig ? {
+                shadowColor: processedButtonOptions.shadowConfig.color || '#000',
+                shadowOffset: processedButtonOptions.shadowConfig.offset || { width: 0, height: 1 },
+                shadowOpacity: processedButtonOptions.shadowConfig.opacity || 0.2,
+                shadowRadius: processedButtonOptions.shadowConfig.radius || 1.5,
+              } as ViewStyle : undefined
+            ].filter(Boolean)}
+            onPress={goToToday}
+            disabled={processedButtonOptions?.disabled}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={processedButtonOptions?.accessibilityLabel || "Go to today's date"}
+            accessibilityHint={processedButtonOptions?.accessibilityHint || "Navigates the calendar to today's date"}
+          >
+            <View style={{ flexDirection: processedButtonOptions?.iconPosition === 'right' ? 'row-reverse' : 'row', alignItems: 'center' }}>
+              {/* Icon - only show if provided */}
+              {processedButtonOptions?.icon && (
+                <View style={{ marginRight: (processedButtonOptions.iconPosition !== 'right' && processedButtonOptions.showText !== false) ? 6 : 0, 
+                               marginLeft: (processedButtonOptions.iconPosition === 'right' && processedButtonOptions.showText !== false) ? 6 : 0 }}>
+                  {processedButtonOptions.icon}
+                </View>
+              )}
+              
+              {/* Text - show unless explicitly disabled */}
+              {processedButtonOptions?.showText !== false && (
+                <Text style={[
+                  styles.todayButtonText,
+                  processedButtonOptions?.textStyle,
+                  {
+                    color: processedButtonOptions?.textColor || 'white',
+                    fontSize: buttonSizeStyles.fontSize,
+                    opacity: processedButtonOptions?.disabled ? 0.5 : 1
+                  }
+                ]}>
+                  {processedButtonOptions?.text || 'Today'}
+                </Text>
+              )}
+            </View>
+          </TouchableOpacity>
+        )}
         
+        {/* Add Event button */}
         {!readOnly && showAddEventButton && selectedDate && (
           <TouchableOpacity 
             style={[styles.addEventButton, { backgroundColor: color }]}
@@ -477,12 +601,12 @@ const Calendar: React.FC<CalendarProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor }]}>
             <Text style={mergeStyles(styles.modalTitle, { color: color })}>
-              {selectedDate && selectedDate.toLocaleDateString(locale, { 
+              {selectedDate && capitalizeDateParts(selectedDate.toLocaleDateString(locale, { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
-              })}
+              }))}
             </Text>
             
             {eventsForSelectedDate.length === 0 ? (
