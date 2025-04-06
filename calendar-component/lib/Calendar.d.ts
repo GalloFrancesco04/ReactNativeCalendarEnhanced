@@ -58,6 +58,9 @@ export interface CalendarProps {
     showAddEventButton?: boolean;
     buttonsContainerStyle?: ViewStyle;
     buttonSize?: 'small' | 'medium' | 'large';
+    updateDateIcons?: (updateFunc: (newDateIcons: {
+        [key: string]: React.ReactNode | null;
+    }) => void) => void;
 }
 export interface TodayButtonOptions {
     text?: string;

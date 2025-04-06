@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StyleSheet, SafeAreaView } from 'react-native';
 import Calendar, { CalendarEvent } from './components/Calendar';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -6,6 +6,9 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 export default function Index() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  
+  // Reference to hold the icon update function
+  const updateIconsRef = useRef<(newIcons: { [key: string]: React.ReactNode | null }) => void>();
   
   // Initialize with some sample events
   useEffect(() => {
@@ -77,6 +80,7 @@ export default function Index() {
     console.log('Deleted event with ID:', eventId);
   }, []);
 
+  // Base date icons
   const dateIcons = {
     '2025-04-20': null, // Mark the date without specifying an icon
     '2025-04-21': <Icon name="star" size={15} color="gold" />,
@@ -106,6 +110,42 @@ export default function Index() {
     borderColor: '#4285F4',
     borderRadius: 8,
   };
+  
+  // Function to update only the date icons
+  const updateIconsWithTasks = useCallback(() => {
+    if (updateIconsRef.current) {
+      // This only updates the icons without re-rendering the whole calendar
+      updateIconsRef.current({
+        '2025-04-15': <Icon name="tasks" size={15} color="#4CAF50" />,
+        '2025-04-16': <Icon name="tasks" size={15} color="#4CAF50" />,
+        '2025-04-17': <Icon name="tasks" size={15} color="#4CAF50" />
+      });
+    }
+  }, []);
+  
+  // Function to update only the date icons with meetings
+  const updateIconsWithMeetings = useCallback(() => {
+    if (updateIconsRef.current) {
+      // This only updates the icons without re-rendering the whole calendar
+      updateIconsRef.current({
+        '2025-04-10': <Icon name="video-camera" size={15} color="#E91E63" />,
+        '2025-04-11': <Icon name="video-camera" size={15} color="#E91E63" />,
+        '2025-04-12': <Icon name="video-camera" size={15} color="#E91E63" />
+      });
+    }
+  }, []);
+  
+  // Function to update only the date icons with trips
+  const updateIconsWithTrips = useCallback(() => {
+    if (updateIconsRef.current) {
+      // This only updates the icons without re-rendering the whole calendar
+      updateIconsRef.current({
+        '2025-04-25': <Icon name="plane" size={15} color="#2196F3" />,
+        '2025-04-26': <Icon name="plane" size={15} color="#2196F3" />,
+        '2025-04-27': <Icon name="plane" size={15} color="#2196F3" />
+      });
+    }
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -148,6 +188,9 @@ export default function Index() {
         defaultIcon={<Icon name="circle" size={10} color="gray" />}
         showCustomIcon={true}
         
+        // Register the update function
+        updateDateIcons={(fn) => { updateIconsRef.current = fn; }}
+        
         // Today button - using single consolidated prop
         todayButtonOptions={{
           text: 'Today',
@@ -173,7 +216,7 @@ export default function Index() {
         
         // UI Options
         readOnly={false}
-        showAddEventButton={false}
+        showAddEventButton={true}
         buttonSize="medium" // Options: 'small', 'medium', 'large'
         buttonsContainerStyle={{ 
           backgroundColor: '#F0F8FF',

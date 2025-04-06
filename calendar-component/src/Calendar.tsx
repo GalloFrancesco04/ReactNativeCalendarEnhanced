@@ -5,6 +5,16 @@ import CalendarGrid from './CalendarGrid';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { formatDateKey } from './utils/dateUtils';
 
+// Utility function to capitalize the first letter of a string
+const capitalizeFirstLetter = (string: string): string => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+// Utility function to capitalize all words in a date string
+const capitalizeDateParts = (dateString: string): string => {
+  return dateString.replace(/(?<=^|[,\s])([a-z])/g, (match) => match.toUpperCase());
+};
+
 // Define the Event type
 export interface CalendarEvent {
   id: string;
@@ -84,6 +94,9 @@ export interface CalendarProps {
   showAddEventButton?: boolean;
   buttonsContainerStyle?: ViewStyle;
   buttonSize?: 'small' | 'medium' | 'large';
+  
+  // Method to update date icons without full re-render
+  updateDateIcons?: (updateFunc: (newDateIcons: { [key: string]: React.ReactNode | null }) => void) => void;
 }
 
 // Today Button specific props
@@ -156,6 +169,7 @@ const Calendar: React.FC<CalendarProps> = ({
   showAddEventButton = true, // Default to showing the Add Event button
   buttonsContainerStyle,
   buttonSize = 'medium', // Default button size
+  updateDateIcons,
 }) => {
   // Default theme values
   const defaultEventColor = '#1976D2';
@@ -174,6 +188,24 @@ const Calendar: React.FC<CalendarProps> = ({
   const [eventDescription, setEventDescription] = useState<string>('');
   const [eventColor, setEventColor] = useState<string>(defaultEventColor);
   const [showDayEvents, setShowDayEvents] = useState<boolean>(false);
+  
+  // State to track the custom icons
+  const [internalDateIcons, setInternalDateIcons] = useState<{ [key: string]: React.ReactNode | null }>(dateIcons);
+  
+  // Implement the updateDateIcons method
+  const handleUpdateDateIcons = useCallback((newDateIcons: { [key: string]: React.ReactNode | null }) => {
+    setInternalDateIcons(prevIcons => ({
+      ...prevIcons,
+      ...newDateIcons
+    }));
+  }, []);
+  
+  // Register the update method if externally provided
+  useEffect(() => {
+    if (typeof updateDateIcons === 'function') {
+      updateDateIcons(handleUpdateDateIcons);
+    }
+  }, [updateDateIcons, handleUpdateDateIcons]);
   
   // Process todayButtonOptions to handle both string and object formats
   const processedButtonOptions = useMemo(() => {
@@ -320,7 +352,7 @@ const Calendar: React.FC<CalendarProps> = ({
   
   // Create icons for dates with events
   const generateEventIcons = useMemo(() => {
-    const icons = { ...dateIcons };
+    const icons = { ...internalDateIcons };
     
     events.forEach(event => {
       const date = event.date;
@@ -335,7 +367,7 @@ const Calendar: React.FC<CalendarProps> = ({
     });
     
     return icons;
-  }, [dateIcons, events, defaultEventColor]);
+  }, [internalDateIcons, events, defaultEventColor]);
   
   // Create a style merge helper function to fix TextStyle errors
   const mergeStyles = (baseStyle: TextStyle, additionalStyle?: TextStyle): TextStyle => {
@@ -591,12 +623,12 @@ const Calendar: React.FC<CalendarProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor }]}>
             <Text style={mergeStyles(styles.modalTitle, { color: color })}>
-              {selectedDate && selectedDate.toLocaleDateString(locale, { 
+              {selectedDate && capitalizeDateParts(selectedDate.toLocaleDateString(locale, { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
-              })}
+              }))}
             </Text>
             
             {eventsForSelectedDate.length === 0 ? (

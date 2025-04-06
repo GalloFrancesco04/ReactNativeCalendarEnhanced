@@ -79,10 +79,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       tempDate.setDate(date.getDate() + dayIndex);
       
       // Get short day name in the specified locale
-      let dayName = tempDate.toLocaleDateString(locale, { weekday: 'short' });
-      // Capitalize the first letter of the day name
-      dayName = capitalizeFirstLetter(dayName);
-      days.push(dayName);
+      const dayName = tempDate.toLocaleDateString(locale, { weekday: 'short' });
+      // Capitalize the day name regardless of locale
+      days.push(capitalizeFirstLetter(dayName));
     }
     
     return days;

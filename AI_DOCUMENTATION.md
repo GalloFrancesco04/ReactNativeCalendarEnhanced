@@ -8,9 +8,11 @@ This document provides a comprehensive guide to the Calendar component, includin
 2. [Component Structure](#component-structure)
 3. [Core Features](#core-features)
 4. [Date Icons Enhancement](#date-icons-enhancement)
-5. [Today Button Customization](#today-button-customization)
-6. [Date Handling Notes](#date-handling-notes)
-7. [Implementation Details](#implementation-details)
+5. [Efficient Icon Updates](#efficient-icon-updates)
+6. [Today Button Customization](#today-button-customization)
+7. [Date Handling Notes](#date-handling-notes)
+8. [Implementation Details](#implementation-details)
+9. [Calendar Props Reference](#calendar-props-reference)
 
 ## Overview
 
@@ -117,6 +119,96 @@ The date icon functionality is primarily implemented in the `CalendarGrid` compo
 3. If neither of the above apply, check for matches in the `iconPatterns` array
 
 The implementation includes a sophisticated resolution mechanism that handles both React element icons and string-based icons (which are automatically converted to FontAwesome icons).
+
+## Efficient Icon Updates
+
+One of the newest enhancements to the Calendar component is the ability to update date icons without triggering a full re-render of the entire calendar. This optimization is particularly valuable for performance in larger calendars or when icons need to be frequently updated.
+
+### The UpdateDateIcons API
+
+The component exposes a new prop called `updateDateIcons` that provides a callback mechanism for registering an icon update function:
+
+```typescript
+updateDateIcons?: (updateFunc: (newDateIcons: { [key: string]: React.ReactNode | null }) => void) => void;
+```
+
+This somewhat complex type signature can be understood as:
+- The prop accepts a function that takes another function as its parameter
+- The parent component uses this to register its reference to the icon updater function
+- The Calendar component passes its internal update method to this function when mounted
+
+### Implementation Approach
+
+The implementation uses React's `useRef` hook along with `useState` and `useCallback` to create an efficient update mechanism:
+
+```typescript
+// Inside the Calendar component
+const [internalDateIcons, setInternalDateIcons] = useState<{ [key: string]: React.ReactNode | null }>(dateIcons);
+
+// Implement the updateDateIcons method
+const handleUpdateDateIcons = useCallback((newDateIcons: { [key: string]: React.ReactNode | null }) => {
+  setInternalDateIcons(prevIcons => ({
+    ...prevIcons,
+    ...newDateIcons
+  }));
+}, []);
+
+// Register the update method if externally provided
+useEffect(() => {
+  if (typeof updateDateIcons === 'function') {
+    updateDateIcons(handleUpdateDateIcons);
+  }
+}, [updateDateIcons, handleUpdateDateIcons]);
+```
+
+The component then uses `internalDateIcons` instead of the prop-provided `dateIcons` in its render logic, ensuring that both external prop changes and internal updates affect what's displayed.
+
+### Usage Example
+
+In the parent component, this functionality is used as follows:
+
+```typescript
+import React, { useRef, useCallback } from 'react';
+import Calendar from './components/Calendar';
+
+export default function CalendarContainer() {
+  // Store the update function reference
+  const updateIconsRef = useRef<(newIcons: { [key: string]: React.ReactNode | null }) => void>();
+  
+  // Example of an action that only updates icons
+  const markImportantDays = useCallback(() => {
+    if (updateIconsRef.current) {
+      updateIconsRef.current({
+        '2025-04-15': <Icon name="star" size={15} color="gold" />,
+        '2025-04-30': <Icon name="exclamation" size={15} color="red" />
+      });
+    }
+  }, []);
+  
+  return (
+    <Calendar 
+      // Register the update function
+      updateDateIcons={(fn) => { updateIconsRef.current = fn; }}
+      // Other props...
+    />
+  );
+}
+```
+
+### Performance Benefits
+
+This approach provides several key performance benefits:
+
+1. **Targeted Updates**: Only the affected day cells re-render, not the entire calendar
+2. **Reduced Prop Changes**: Avoids a full prop change cascade through the component tree
+3. **Memory Efficiency**: Uses a single state object with shallow merging for updates
+4. **Update Batching**: Multiple icon updates can be batched into a single state update
+
+This implementation is especially important for calendars in performance-sensitive contexts, such as:
+- Calendars with many custom icons that change frequently
+- Applications where the calendar is part of a complex UI with many components
+- Mobile devices with limited processing power
+- Scenarios where icons are updated based on external data sources or real-time events
 
 ## Today Button Customization
 
@@ -324,3 +416,61 @@ The `Calendar` component includes enhanced rendering logic for the Today button:
 ```
 
 These implementations provide a powerful and flexible API for both date icons and Today button customization, enhancing the overall user experience and developer experience of the calendar component.
+
+## Calendar Props Reference
+
+The following table provides a comprehensive reference of all available props for the Calendar component:
+
+| Prop Name             | Type                              | Default       | Description                                                                 |
+|-----------------------|-----------------------------------|---------------|-----------------------------------------------------------------------------|
+| **Core Functionality**  |                                   |               |                                                                             |
+| `initialDate`         | `Date`                           | `new Date()`  | Initial date to display                                |
+| `onSelectDate`        | `(date: Date) => void`           | `undefined`   | Callback when a date is selected                       |
+| `locale`              | `string`                         | `'en-US'`     | Locale for date formatting                                    |
+| `startWeekOnMonday`   | `boolean`                        | `true`        | Whether week starts on Monday                                          |
+| **Styling**            |                                   |               |                                                                             |
+| `color`               | `string`                         | `'#2196F3'`   | Primary color for highlights and buttons                              |
+| `backgroundColor`     | `string`                         | `'white'`     | Background color of the calendar                                          |
+| `headerBackgroundColor` | `string`                       | `'white'`     | Background color for header section                                    |
+| `headerColor`         | `string`                         | `'#000'`      | Text color for month/year title                                        |
+| `cellBackgroundColor` | `string`                         | `'white'`     | Background color of day cells                                          |
+| `cellBorderColor`     | `string`                         | `'#e0e0e0'`   | Border color of day cells                                             |
+| `iconColor`           | `string`                         | `'#2196F3'`   | Color for navigation icons                                             |
+| `selectedBackgroundColor` | `string`                     | `'#2196F3'`   | Background color for selected day                                      |
+| `todayHighlightColor` | `string`                         | `'#2196F3'`   | Color used to highlight today's date                                     |
+| `outsideMonthOpacity` | `number`                         | `0.3`         | Opacity for dates outside current month                                |
+| **Text Styling**       |                                   |               |                                                                             |
+| `headerTextColor`     | `string`                         | `'#000'`      | Color for month/year header text                                       |
+| `headerStyle`         | `TextStyle`                      | `undefined`   | Custom styles for header text                                          |
+| `dayNameStyle`        | `TextStyle`                      | `undefined`   | Custom styles for day names                                            |
+| `dayNumberStyle`      | `TextStyle`                      | `undefined`   | Custom styles for day numbers                                          |
+| `dayNameColor`        | `string`                         | `'#000'`      | Color for weekday names in header                                     |
+| `dayNumberColor`      | `string`                         | `'#000'`      | Color for day numbers in cells                                            |
+| `selectedDayTextColor`| `string`                         | `'white'`     | Text color for selected day                                            |
+| **Icons**              |                                   |               |                                                                             |
+| `previousIcon`        | `React.ReactNode`                | Default chevron | Custom icon for previous month button                                  |
+| `nextIcon`            | `React.ReactNode`                | Default chevron | Custom icon for next month button                                      |
+| **Date Icons**         |                                   |               |                                                                             |
+| `customIcon`          | `React.ReactNode`                | `null`        | Custom icon to display for dates                                          |
+| `showCustomIcon`      | `boolean \| ((date: Date) => boolean)` | `false`      | Whether to show custom icons                                    |
+| `dateIcons`           | `{ [key: string]: React.ReactNode \| null }` | `{}` | Map of dates to custom icons (YYYY-MM-DD format)                      |
+| `defaultIcon`         | `React.ReactNode`                | `null`        | Default icon for dates with `null` in dateIcons               |
+| `getDateIcon`         | `(date: Date) => React.ReactNode \| null \| undefined` | `undefined` | Function for dynamic icon generation     |
+| `iconPatterns`        | `Array<{matcher: (date: Date) => boolean, icon: React.ReactNode \| null, priority?: number}>` | `[]` | Pattern-based icons with priority |
+| `updateDateIcons`     | `(updateFunc: (newDateIcons: { [key: string]: React.ReactNode \| null }) => void) => void` | `undefined` | Method to register function for updating icons without re-rendering |
+| **Events**             |                                   |               |                                                                             |
+| `events`              | `CalendarEvent[]`                | `[]`          | Array of events to display                                |
+| `onAddEvent`          | `(event: CalendarEvent) => void` | `undefined`   | Callback when an event is added                        |
+| `onUpdateEvent`       | `(event: CalendarEvent) => void` | `undefined`   | Callback when an event is updated                      |
+| `onDeleteEvent`       | `(eventId: string) => void`      | `undefined`   | Callback when an event is deleted                       |
+| **UI Options**         |                                   |               |                                                                             |
+| `readOnly`            | `boolean`                        | `false`       | Whether calendar is in read-only mode                                 |
+| `showAddEventButton`  | `boolean`                        | `true`        | Whether to show "Add Event" button                                    |
+| `buttonsContainerStyle` | `ViewStyle`                      | `undefined`   | Custom styles for buttons container                                   |
+| `buttonSize`          | `'small' \| 'medium' \| 'large'` | `'medium'`    | Size of buttons                                                        |
+| **Today Button**       |                                   |               |                                                                             |
+| `todayButtonOptions`  | `TodayButtonOptions \| string`   | `undefined`   | Comprehensive options for Today button                       |
+| `todayButtonText`     | `string`                         | `'Today'`     | Text for "Go to Today" button (deprecated)     |
+| `todayButtonStyle`    | `ViewStyle`                      | `undefined`   | Custom styles for "Go to Today" button (deprecated) |
+| `todayButtonTextStyle` | `TextStyle`                      | `undefined`   | Custom styles for "Go to Today" button text (deprecated) |
+| `todayColor`          | `string`                         | `color value` | Color used to highlight today's date                                       |

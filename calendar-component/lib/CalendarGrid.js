@@ -49,6 +49,10 @@ var react_1 = __importStar(require("react"));
 var react_native_1 = require("react-native");
 var CalendarDay_1 = __importDefault(require("./CalendarDay"));
 var FontAwesome_1 = __importDefault(require("react-native-vector-icons/FontAwesome"));
+// Utility function to capitalize the first letter of a string
+var capitalizeFirstLetter = function (string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+};
 var CalendarGrid = function (_a) {
     var currentMonth = _a.currentMonth, selectedDate = _a.selectedDate, onSelectDate = _a.onSelectDate, color = _a.color, startWeekOnMonday = _a.startWeekOnMonday, dayNameStyle = _a.dayNameStyle, dayNumberStyle = _a.dayNumberStyle, _b = _a.cellBackgroundColor, cellBackgroundColor = _b === void 0 ? 'white' : _b, _c = _a.cellBorderColor, cellBorderColor = _c === void 0 ? '#e0e0e0' : _c, customIcon = _a.customIcon, showCustomIcon = _a.showCustomIcon, _d = _a.dateIcons, dateIcons = _d === void 0 ? {} : _d, // Default to an empty object
     _e = _a.defaultIcon, // Default to an empty object
@@ -75,7 +79,8 @@ var CalendarGrid = function (_a) {
             tempDate.setDate(date.getDate() + dayIndex);
             // Get short day name in the specified locale
             var dayName = tempDate.toLocaleDateString(locale, { weekday: 'short' });
-            days.push(dayName);
+            // Capitalize the day name regardless of locale
+            days.push(capitalizeFirstLetter(dayName));
         }
         return days;
     };

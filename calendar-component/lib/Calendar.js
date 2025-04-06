@@ -52,6 +52,14 @@ var react_native_1 = require("react-native");
 var CalendarHeader_1 = __importDefault(require("./CalendarHeader"));
 var CalendarGrid_1 = __importDefault(require("./CalendarGrid"));
 var dateUtils_1 = require("./utils/dateUtils");
+// Utility function to capitalize the first letter of a string
+var capitalizeFirstLetter = function (string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+};
+// Utility function to capitalize all words in a date string
+var capitalizeDateParts = function (dateString) {
+    return dateString.replace(/(?<=^|[,\s])([a-z])/g, function (match) { return match.toUpperCase(); });
+};
 var Calendar = function (_a) {
     var _b = _a.initialDate, initialDate = _b === void 0 ? new Date() : _b, // Default to today's date if not provided
     onSelectDate = _a.onSelectDate, _c = _a.locale, locale = _c === void 0 ? 'en-US' : _c, _d = _a.startWeekOnMonday, startWeekOnMonday = _d === void 0 ? true : _d, _e = _a.color, color = _e === void 0 ? '#2196F3' : _e, // Default primary color
@@ -59,8 +67,7 @@ var Calendar = function (_a) {
     backgroundColor = _f === void 0 ? 'white' : _f, // Default calendar background
     _g = _a.headerBackgroundColor, // Default calendar background
     headerBackgroundColor = _g === void 0 ? 'white' : _g, // Default header background
-    _h = _a.cellBackgroundColor, // Default header background
-    cellBackgroundColor = _h === void 0 ? 'white' : _h, // Default day cell background
+    headerColor = _a.headerColor, _h = _a.cellBackgroundColor, cellBackgroundColor = _h === void 0 ? 'white' : _h, // Default day cell background
     _j = _a.cellBorderColor, // Default day cell background
     cellBorderColor = _j === void 0 ? '#e0e0e0' : _j, // Default day cell border
     _k = _a.iconColor, // Default day cell border
@@ -80,7 +87,8 @@ var Calendar = function (_a) {
     _s = _a.selectedDayTextColor, // Default day number color
     selectedDayTextColor = _s === void 0 ? '#FFF' : _s, // Default selected day text color
     headerStyle = _a.headerStyle, dayNameStyle = _a.dayNameStyle, dayNumberStyle = _a.dayNumberStyle, previousIcon = _a.previousIcon, nextIcon = _a.nextIcon, _t = _a.todayButtonText, todayButtonText = _t === void 0 ? 'Today' : _t, todayButtonStyle = _a.todayButtonStyle, todayButtonTextStyle = _a.todayButtonTextStyle, todayButtonOptions = _a.todayButtonOptions, customIcon = _a.customIcon, _u = _a.showCustomIcon, showCustomIcon = _u === void 0 ? false : _u, _v = _a.dateIcons, dateIcons = _v === void 0 ? {} : _v, _w = _a.defaultIcon, defaultIcon = _w === void 0 ? null : _w, getDateIcon = _a.getDateIcon, _x = _a.iconPatterns, iconPatterns = _x === void 0 ? [] : _x, _y = _a.events, events = _y === void 0 ? [] : _y, onAddEvent = _a.onAddEvent, onUpdateEvent = _a.onUpdateEvent, onDeleteEvent = _a.onDeleteEvent, _z = _a.readOnly, readOnly = _z === void 0 ? false : _z, _0 = _a.showAddEventButton, showAddEventButton = _0 === void 0 ? true : _0, // Default to showing the Add Event button
-    buttonsContainerStyle = _a.buttonsContainerStyle, _1 = _a.buttonSize, buttonSize = _1 === void 0 ? 'medium' : _1;
+    buttonsContainerStyle = _a.buttonsContainerStyle, _1 = _a.buttonSize, buttonSize = _1 === void 0 ? 'medium' : _1, // Default button size
+    updateDateIcons = _a.updateDateIcons;
     // Default theme values
     var defaultEventColor = '#1976D2';
     var eventColors = ['#1976D2', '#E53935', '#43A047', '#FB8C00', '#5E35B1'];
@@ -94,6 +102,18 @@ var Calendar = function (_a) {
     var _7 = (0, react_1.useState)(''), eventDescription = _7[0], setEventDescription = _7[1];
     var _8 = (0, react_1.useState)(defaultEventColor), eventColor = _8[0], setEventColor = _8[1];
     var _9 = (0, react_1.useState)(false), showDayEvents = _9[0], setShowDayEvents = _9[1];
+    // State to track the custom icons
+    var _10 = (0, react_1.useState)(dateIcons), internalDateIcons = _10[0], setInternalDateIcons = _10[1];
+    // Implement the updateDateIcons method
+    var handleUpdateDateIcons = (0, react_1.useCallback)(function (newDateIcons) {
+        setInternalDateIcons(function (prevIcons) { return (__assign(__assign({}, prevIcons), newDateIcons)); });
+    }, []);
+    // Register the update method if externally provided
+    (0, react_1.useEffect)(function () {
+        if (typeof updateDateIcons === 'function') {
+            updateDateIcons(handleUpdateDateIcons);
+        }
+    }, [updateDateIcons, handleUpdateDateIcons]);
     // Process todayButtonOptions to handle both string and object formats
     var processedButtonOptions = (0, react_1.useMemo)(function () {
         // If todayButtonOptions is a string, treat it as the button text
@@ -221,7 +241,7 @@ var Calendar = function (_a) {
     }, [onSelectDate]);
     // Create icons for dates with events
     var generateEventIcons = (0, react_1.useMemo)(function () {
-        var icons = __assign({}, dateIcons);
+        var icons = __assign({}, internalDateIcons);
         events.forEach(function (event) {
             var date = event.date;
             var dateKey = (0, dateUtils_1.formatDateKey)(date);
@@ -231,7 +251,7 @@ var Calendar = function (_a) {
             }
         });
         return icons;
-    }, [dateIcons, events, defaultEventColor]);
+    }, [internalDateIcons, events, defaultEventColor]);
     // Create a style merge helper function to fix TextStyle errors
     var mergeStyles = function (baseStyle, additionalStyle) {
         return additionalStyle ? __assign(__assign({}, baseStyle), additionalStyle) : baseStyle;
@@ -263,7 +283,7 @@ var Calendar = function (_a) {
     // Get button size styles
     var buttonSizeStyles = (0, react_1.useMemo)(function () { return getButtonSizeStyles(buttonSize); }, [buttonSize, getButtonSizeStyles]);
     return (react_1.default.createElement(react_native_1.View, { style: [styles.container, { backgroundColor: backgroundColor }] },
-        react_1.default.createElement(CalendarHeader_1.default, { currentMonth: currentMonth, onPreviousMonth: goToPreviousMonth, onNextMonth: goToNextMonth, color: color, textStyle: headerStyle || {}, locale: locale, previousIcon: previousIcon, nextIcon: nextIcon }),
+        react_1.default.createElement(CalendarHeader_1.default, { currentMonth: currentMonth, onPreviousMonth: goToPreviousMonth, onNextMonth: goToNextMonth, color: color, iconColor: iconColor, textStyle: headerStyle || {}, backgroundColor: headerBackgroundColor, headerColor: headerColor || headerTextColor, locale: locale, previousIcon: previousIcon, nextIcon: nextIcon }),
         react_1.default.createElement(CalendarGrid_1.default, { currentMonth: currentMonth, selectedDate: selectedDate, onSelectDate: handleDateSelect, color: color, startWeekOnMonday: startWeekOnMonday, dayNameStyle: dayNameStyle, dayNumberStyle: dayNumberStyle, cellBackgroundColor: cellBackgroundColor, cellBorderColor: cellBorderColor, customIcon: customIcon, showCustomIcon: showCustomIcon, dateIcons: generateEventIcons, defaultIcon: defaultIcon, locale: locale, outsideMonthOpacity: outsideMonthOpacity, selectedBackgroundColor: selectedBackgroundColor, todayColor: todayHighlightColor, dayNameColor: dayNameColor, dayNumberColor: dayNumberColor, selectedDayTextColor: selectedDayTextColor }),
         react_1.default.createElement(react_native_1.View, { style: [styles.controlsContainer, buttonsContainerStyle] },
             ((processedButtonOptions === null || processedButtonOptions === void 0 ? void 0 : processedButtonOptions.visible) !== false) && (react_1.default.createElement(react_native_1.TouchableOpacity, { style: [
@@ -339,12 +359,12 @@ var Calendar = function (_a) {
         react_1.default.createElement(react_native_1.Modal, { visible: showDayEvents, transparent: true, animationType: "slide", onRequestClose: function () { return setShowDayEvents(false); } },
             react_1.default.createElement(react_native_1.View, { style: styles.modalOverlay },
                 react_1.default.createElement(react_native_1.View, { style: [styles.modalContent, { backgroundColor: backgroundColor }] },
-                    react_1.default.createElement(react_native_1.Text, { style: mergeStyles(styles.modalTitle, { color: color }) }, selectedDate && selectedDate.toLocaleDateString(locale, {
+                    react_1.default.createElement(react_native_1.Text, { style: mergeStyles(styles.modalTitle, { color: color }) }, selectedDate && capitalizeDateParts(selectedDate.toLocaleDateString(locale, {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
-                    })),
+                    }))),
                     eventsForSelectedDate.length === 0 ? (react_1.default.createElement(react_native_1.Text, { style: mergeStyles(styles.noEventsText, { color: '#666' }) }, "No events for this day")) : (react_1.default.createElement(react_native_1.ScrollView, { style: styles.eventsList }, eventsForSelectedDate.map(function (event) { return (react_1.default.createElement(react_native_1.TouchableOpacity, { key: event.id, style: [styles.eventItem, {
                                 borderLeftColor: event.color || defaultEventColor,
                                 backgroundColor: cellBackgroundColor

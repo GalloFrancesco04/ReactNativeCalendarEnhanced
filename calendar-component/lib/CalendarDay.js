@@ -46,6 +46,10 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_1 = __importStar(require("react"));
 var react_native_1 = require("react-native");
+// Utility function to capitalize the first letter of a string
+var capitalizeFirstLetter = function (string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+};
 var CalendarDay = function (_a) {
     var date = _a.date, isCurrentMonth = _a.isCurrentMonth, isSelected = _a.isSelected, isToday = _a.isToday, onSelectDate = _a.onSelectDate, _b = _a.color, color = _b === void 0 ? '#2196F3' : _b, textStyle = _a.textStyle, _c = _a.customIcon, customIcon = _c === void 0 ? null : _c, _d = _a.showCustomIcon, showCustomIcon = _d === void 0 ? false : _d, _e = _a.locale, locale = _e === void 0 ? 'en-US' : _e, _f = _a.outsideMonthOpacity, outsideMonthOpacity = _f === void 0 ? 0.3 : _f, selectedBackgroundColor = _a.selectedBackgroundColor, todayColor = _a.todayColor, _g = _a.dayNumberColor, dayNumberColor = _g === void 0 ? '#000000' : _g, // Default day number color
     _h = _a.selectedDayTextColor, // Default day number color
@@ -100,12 +104,15 @@ var CalendarDay = function (_a) {
     }, [showCustomIcon, date]);
     // Format the date for accessibility labeling - memoized
     var accessibilityProps = (0, react_1.useMemo)(function () {
+        // Get the formatted date from locale
         var formattedDate = date.toLocaleDateString(locale, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
+        // Capitalize the first letters of month and weekday names
+        formattedDate = formattedDate.replace(/(?<=^|[,\s])([a-z])/g, function (match) { return match.toUpperCase(); });
         // Generate appropriate accessibility state
         var accessibilityState = {
             selected: isSelected,
